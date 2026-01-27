@@ -1,4 +1,4 @@
-package com.Sorensen.FitMark.dto.request;
+package com.Sorensen.FitMark.dto.auth;
 
 import jakarta.validation.constraints.NotEmpty;
 

@@ -1,4 +1,4 @@
-package com.Sorensen.FitMark.config;
+package com.Sorensen.FitMark.config.security.JWT;
 
 
 import com.Sorensen.FitMark.entity.User;

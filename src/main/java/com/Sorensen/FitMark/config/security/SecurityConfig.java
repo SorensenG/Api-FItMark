@@ -1,5 +1,6 @@
-package com.Sorensen.FitMark.config;
+package com.Sorensen.FitMark.config.security;
 
+import com.Sorensen.FitMark.config.security.JWT.SecurityFilter;
 import jakarta.servlet.DispatcherType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

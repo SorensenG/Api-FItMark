@@ -7,7 +7,6 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.security.Timestamp;
 import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -46,7 +45,7 @@ public class User implements UserDetails {
     }
 
     @Override
-    public @Nullable String getPassword() {
+    public String getPassword() {
         return passwordHash;
     }
 
