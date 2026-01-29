@@ -6,5 +6,7 @@ import com.Sorensen.FitMark.entity.Workout;
 import java.util.List;
 import java.util.UUID;
 
-public record WorkoutResponse (UUID id, UUID userId, String username,  String title, List<Exercise> exercises, String notes){
+public record WorkoutResponse (UUID id, UUID userId, String userName,  String title, List<Exercise> exercises, String notes){
+
+
 }
