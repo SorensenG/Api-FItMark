@@ -2,8 +2,8 @@ package com.Sorensen.FitMark.service;
 
 import com.Sorensen.FitMark.dto.workout.CreateWorkoutRequest;
 import com.Sorensen.FitMark.dto.workout.WorkoutResponse;
+import com.Sorensen.FitMark.entity.Split;
 import com.Sorensen.FitMark.entity.User;
-import com.Sorensen.FitMark.entity.Workout;
 import com.Sorensen.FitMark.repository.UserRepository;
 import com.Sorensen.FitMark.repository.WorkoutRepository;
 import org.springframework.stereotype.Service;
@@ -31,14 +31,20 @@ public class WorkoutService {
         if (user.isPresent()) {
             User present = user.get();
 
-            Workout workout = Workout.builder()
+
+            var split = Split.builder()
+                    .name(request.title())
                     .user(present)
-                    .title(request.title())
-                    .notes(request.notes())
-                    .createdAt(request.date())
                     .build();
 
-            workout = repository.save(workout);
+//            Workout workout = Workout.builder()
+//                    .user(present)
+//                    .title(request.title())
+//                    .notes(request.notes())
+//                    .createdAt(request.date())
+//                    .build();
+
+            split = repository.save(split);
 
 
             return new WorkoutResponse(
