@@ -4,6 +4,8 @@ import com.Sorensen.FitMark.dto.workout.CreateWorkoutRequest;
 import com.Sorensen.FitMark.dto.workout.WorkoutResponse;
 import com.Sorensen.FitMark.entity.Split;
 import com.Sorensen.FitMark.entity.User;
+import com.Sorensen.FitMark.entity.Workout;
+import com.Sorensen.FitMark.repository.SplitRepository;
 import com.Sorensen.FitMark.repository.UserRepository;
 import com.Sorensen.FitMark.repository.WorkoutRepository;
 import org.springframework.stereotype.Service;
@@ -16,41 +18,46 @@ import java.util.UUID;
 public class WorkoutService {
     private final WorkoutRepository repository;
     private final UserRepository userRepository;
+    private final SplitRepository splitRepository;
 
 
-    public WorkoutService(WorkoutRepository workoutRepository, UserRepository userRepository) {
+    public WorkoutService(WorkoutRepository workoutRepository, UserRepository userRepository, SplitRepository splitRepository) {
         this.repository = workoutRepository;
         this.userRepository = userRepository;
+        this.splitRepository = splitRepository;
     }
 
 
-    public WorkoutResponse createWorkout(UUID userId, CreateWorkoutRequest request) {
+    public WorkoutResponse createWorkout(UUID userId, CreateWorkoutRequest request, UUID splitId) {
 
         Optional<User> user = userRepository.findById(userId);
+        Optional<Split> split = splitRepository.findById(splitId);
 
-        if (user.isPresent()) {
+        int workoutPos = repository.findTopByUserIdAndSplitIdOrderByPositionDesc(userId, splitId)
+                .map(w -> w.getPosition() + 1).orElse(0);
+
+        if (user.isPresent() && split.isPresent()) {
             User present = user.get();
+            Split presentSplit = split.get();
 
 
-            var split = Split.builder()
-                    .name(request.title())
+            Workout workout = Workout.builder()
                     .user(present)
+                    .split(presentSplit)
+                    .position(workoutPos)
+                    .title(request.title())
+                    .notes(request.notes())
                     .build();
 
-//            Workout workout = Workout.builder()
-//                    .user(present)
-//                    .title(request.title())
-//                    .notes(request.notes())
-//                    .createdAt(request.date())
-//                    .build();
-
-            split = repository.save(split);
+            workout = repository.save(workout);
 
 
             return new WorkoutResponse(
                     workout.getId(),
                     workout.getUser().getId(),
-                    workout.getUser().getUsername(),
+                    workout.getSplit().getId(),
+                   workout.getUser().getUsername(),
+                    workout.getPosition(),
                     workout.getTitle(),
                     workout.getExercises(),
                     workout.getNotes()
@@ -59,6 +66,7 @@ public class WorkoutService {
             throw new IllegalArgumentException("User not found");
         }
     }
+
     @Transactional
     public boolean deleteWorkout(User user, UUID workoutId) {
         if (!repository.existsByIdAndUserId(workoutId, user.getId())) {

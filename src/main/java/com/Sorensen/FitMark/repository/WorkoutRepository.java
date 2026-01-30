@@ -15,6 +15,7 @@ public interface WorkoutRepository extends JpaRepository<Workout, UUID> {
 
     boolean existsByIdAndUserId(UUID workoutId, UUID userId);
 
+    Optional<Workout> findTopByUserIdAndSplitIdOrderByPositionDesc(UUID userId, UUID splitId);
 
     List<Workout> findByTitle(String title);
 

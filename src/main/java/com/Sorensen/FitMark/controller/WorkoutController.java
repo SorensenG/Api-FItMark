@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/workouts")
+@RequestMapping("/splits/{splitId}/workouts")
 public class WorkoutController {
 
     private final WorkoutService workoutService;
@@ -24,15 +24,15 @@ public class WorkoutController {
         this.workoutService = workoutService;
     }
 
-    @PostMapping("/create")
-    public ResponseEntity<WorkoutResponse> createWorkout(@AuthenticationPrincipal User user, @Valid @RequestBody CreateWorkoutRequest req) {
+    @PostMapping
+    public ResponseEntity<WorkoutResponse> createWorkout(@AuthenticationPrincipal User user,@PathVariable UUID splitId ,@Valid @RequestBody CreateWorkoutRequest req ) {
 
         var id = user.getId();
-        if (id == null) {
+        if (id == null || splitId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        var workout = workoutService.createWorkout(id, req);
-        return ResponseEntity.status(HttpStatus.CREATED).body(new WorkoutResponse(workout.id(), workout.userId(),workout.userName(), workout.title(), workout.exercises(), workout.notes()));
+        var workout = workoutService.createWorkout(id, req, splitId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new WorkoutResponse(workout.id(), workout.userId(),workout.splitID(),workout.userName(), workout.pos(),workout.title(), workout.exercises(), workout.notes()));
 
     }
 
