@@ -8,4 +8,4 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public record CreateWorkoutRequest(
-       @NotBlank String title, String notes, Integer position) {}
+       @NotBlank(message = "Workout must have a title") String title, String notes, Integer position) {}

@@ -22,6 +22,8 @@ public interface WorkoutRepository extends JpaRepository<Workout, UUID> {
     List<Workout> findByUserId(UUID userId);
 
     Optional<Workout> findByIdAndUserId(UUID workoutId, UUID userId);
+
+    List<Workout> findAllByUserId(UUID userId);
 }
 
 
