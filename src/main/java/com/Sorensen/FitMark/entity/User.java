@@ -1,13 +1,12 @@
 package com.Sorensen.FitMark.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.security.Timestamp;
 import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -35,6 +34,21 @@ public class User implements UserDetails {
     @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
     private OffsetDateTime createdAt;
 
+    // templates do usuário
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"user"})
+    private List<Workout> workouts;
+
+    // histórico do usuário
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"user"})
+    private List<WorkoutSession> workoutSessions;
+
+    // divisões do usuário
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"user"})
+    private List<Split> splits;
+
     @Override
     public String getUsername() {
         return username;
@@ -46,7 +60,7 @@ public class User implements UserDetails {
     }
 
     @Override
-    public @Nullable String getPassword() {
+    public String getPassword() {
         return passwordHash;
     }
 
