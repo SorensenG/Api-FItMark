@@ -3,6 +3,7 @@ package com.Sorensen.FitMark.service;
 import com.Sorensen.FitMark.config.security.JWT.TokenConfig;
 import com.Sorensen.FitMark.dto.auth.RegisterUserRequest;
 import com.Sorensen.FitMark.dto.auth.RegisterUserResponse;
+import com.Sorensen.FitMark.dto.user.UserDetailsResponse;
 import com.Sorensen.FitMark.entity.User;
 import com.Sorensen.FitMark.repository.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -10,6 +11,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class UserService {
@@ -51,6 +55,19 @@ public class UserService {
         userRepository.save(user);
 
         return new RegisterUserResponse(user.getUsername(), user.getEmail());
+    }
+
+    public UserDetailsResponse getUserDetails(UUID id) {
+
+        Optional<User> user = userRepository.findById(id);
+
+        if (user.isPresent()) {
+            User present = user.get();
+            return new UserDetailsResponse(present.getUsername(),present.getId(), present.getEmail(), present.getCreatedAt());
+        } else {
+            throw new IllegalArgumentException("User not found");
+        }
+
     }
 }
 

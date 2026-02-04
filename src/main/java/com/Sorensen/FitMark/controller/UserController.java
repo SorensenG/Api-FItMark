@@ -1,16 +1,14 @@
 package com.Sorensen.FitMark.controller;
 
 import com.Sorensen.FitMark.dto.user.ListUserWorkoutsResponse;
-import com.Sorensen.FitMark.dto.workout.WorkoutResponse;
+import com.Sorensen.FitMark.dto.user.UserDetailsResponse;
 import com.Sorensen.FitMark.entity.User;
-import com.Sorensen.FitMark.entity.Workout;
 import com.Sorensen.FitMark.service.UserService;
 import com.Sorensen.FitMark.service.WorkoutService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -40,5 +38,25 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(new ListUserWorkoutsResponse(res.workouts(), res.totalWorkouts()));
 
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserDetailsResponse> getUserDetails(@AuthenticationPrincipal User user) {
+
+        if (user == null || user.getId() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+
+        }
+
+        var id = user.getId();
+
+
+        var userDetails = userService.getUserDetails(id);
+
+
+    return  ResponseEntity.status(HttpStatus.OK).body(new UserDetailsResponse(userDetails.username(),userDetails.id(), userDetails.email(), userDetails.createdAt()));
+
+    }
+
+
 }
 
