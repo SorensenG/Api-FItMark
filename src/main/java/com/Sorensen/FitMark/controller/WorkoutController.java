@@ -1,13 +1,12 @@
 package com.Sorensen.FitMark.controller;
 
 import com.Sorensen.FitMark.dto.workout.CreateWorkoutRequest;
+import com.Sorensen.FitMark.dto.workout.StartWorkOutSessionResponse;
 import com.Sorensen.FitMark.dto.workout.WorkoutResponse;
 import com.Sorensen.FitMark.entity.User;
-import com.Sorensen.FitMark.entity.Workout;
 import com.Sorensen.FitMark.service.WorkoutService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -85,8 +84,10 @@ public class WorkoutController {
 //
 //        return ResponseEntity.status(HttpStatus.OK).body(new WorkoutResponse(workoutOpt.id(), workoutOpt.userId(), workoutOpt.splitID(), workoutOpt.userName(), workoutOpt.pos(), workoutOpt.title(), workoutOpt.exercises(), workoutOpt.notes()));
 
-    return null;
+        return null;
 
     }
+
+
 }
 
