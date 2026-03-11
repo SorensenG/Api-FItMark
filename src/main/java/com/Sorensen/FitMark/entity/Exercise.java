@@ -34,16 +34,22 @@ public class Exercise {
     @Column(nullable = false)
     private Integer sets;
 
-    @NotNull
-    @Column(nullable = false)
-    private Integer reps;
 
-    @Column(name = "last_weight", precision = 6, scale = 2)
-    private BigDecimal weight;
+    @Column(name = "last_top_set_reps") //Ultimas repetições da série mais pesada
+    @Builder.Default
+    private Integer lastTopSetReps = 0;
+
+    @Column(name = "weight", precision = 6, scale = 2) //Ultimo peso utilizado
+    @Builder.Default
+    private BigDecimal weight = BigDecimal.ZERO;
+
+
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
+
+
 
     @JsonIgnoreProperties({"exercises", "workoutSessions", "user"})
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

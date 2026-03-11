@@ -53,5 +53,5 @@ public class SetLog {
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
+    private OffsetDateTime createdAt; //quando foi feito pela ultima vez o registro dessa série
 }
