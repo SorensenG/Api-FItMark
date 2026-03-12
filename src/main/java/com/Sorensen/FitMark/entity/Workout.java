@@ -56,8 +56,9 @@ public class Workout {
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
-    // exercícios template desse workout
+    // exercícios template desse workout (ORDENADO POR POSITION)
     @OneToMany(mappedBy = "workout", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("position ASC")
     @Builder.Default
     @JsonIgnoreProperties({"workout", "setLogs"})
     private List<Exercise> exercises = new ArrayList<>();

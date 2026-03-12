@@ -26,14 +26,16 @@ public class WorkoutSessionController {
     }
 
     @PostMapping("/workoutsession-start")
-    public ResponseEntity<StartWorkOutSessionResponse> startWorkoutSession(@AuthenticationPrincipal User user , @PathVariable UUID workoutId){
+    public ResponseEntity<StartWorkOutSessionResponse> startWorkoutSession(@AuthenticationPrincipal User user,
+                                                                           @PathVariable UUID workoutId,
+                                                                           @PathVariable UUID splitId) {
 
         if (user == null){
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         var id = user.getId();
 
-        var sessionStartedOpt = workoutSessionService.startWorkoutSession(id, workoutId);
+        var sessionStartedOpt = workoutSessionService.startWorkoutSession(id, splitId,workoutId);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(new StartWorkOutSessionResponse(sessionStartedOpt.sessionId(), sessionStartedOpt.workoutId(), sessionStartedOpt.workoutTitle(), sessionStartedOpt.startedAt(), sessionStartedOpt.completed(), sessionStartedOpt.workoutExercises()));
     }

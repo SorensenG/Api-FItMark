@@ -1,9 +1,8 @@
 package com.Sorensen.FitMark.controller;
 
+
 import com.Sorensen.FitMark.dto.exercise.AddExerciseRequest;
 import com.Sorensen.FitMark.dto.exercise.AddExerciseResponse;
-import com.Sorensen.FitMark.dto.split.SplitCreateResponse;
-import com.Sorensen.FitMark.entity.Exercise;
 import com.Sorensen.FitMark.entity.User;
 import com.Sorensen.FitMark.repository.ExerciseRepository;
 import com.Sorensen.FitMark.service.ExerciseService;
@@ -20,11 +19,9 @@ import java.util.UUID;
 @RequestMapping("/splits/{splitId}/workouts/{workoutId}/exercises")
 public class ExerciseController {
 
-    private final ExerciseRepository exerciseRepository;
     private final ExerciseService exerciseService;
 
     public ExerciseController(ExerciseRepository exerciseRepository, ExerciseService exerciseService) {
-        this.exerciseRepository = exerciseRepository;
         this.exerciseService = exerciseService;
     }
 
@@ -39,7 +36,8 @@ public class ExerciseController {
         return ResponseEntity.status(HttpStatus.CREATED).body(new AddExerciseResponse(
                         exercise.exerciseName(),
                         exercise.workoutName(),
-                        exercise.Username()
+                        exercise.Username(),
+                exercise.exercisePosition()
                 )
         );
 
@@ -58,7 +56,9 @@ public class ExerciseController {
         return ResponseEntity.status(HttpStatus.OK).body(new AddExerciseResponse(
                 exercise.exerciseName(),
                 exercise.workoutName(),
-                exercise.Username()));
+                exercise.Username(),
+                exercise.exercisePosition()));
+
 
     }
 

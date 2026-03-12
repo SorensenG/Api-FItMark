@@ -1,6 +1,6 @@
 package com.Sorensen.FitMark.dto.workout;
 
-import com.Sorensen.FitMark.entity.Exercise;
+import com.Sorensen.FitMark.dto.exercise.ExerciseSessionResponse;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -12,5 +12,5 @@ public record StartWorkOutSessionResponse(
         String workoutTitle,
         OffsetDateTime startedAt,
         Boolean completed,
-        List<Exercise> workoutExercises
+        List<ExerciseSessionResponse> workoutExercises
 ) {}
