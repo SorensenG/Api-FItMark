@@ -2,65 +2,207 @@ package com.Sorensen.FitMark.service;
 
 import com.Sorensen.FitMark.Util.EntityFinder;
 import com.Sorensen.FitMark.dto.exercise.ExerciseSessionResponse;
-import com.Sorensen.FitMark.dto.workout.StartWorkOutSessionResponse;
+import com.Sorensen.FitMark.dto.workout.*;
+import com.Sorensen.FitMark.entity.Exercise;
+import com.Sorensen.FitMark.entity.SetLog;
+import com.Sorensen.FitMark.entity.SetType;
 import com.Sorensen.FitMark.entity.WorkoutSession;
+import com.Sorensen.FitMark.repository.ExerciseRepository;
+import com.Sorensen.FitMark.repository.SetLogRepository;
 import com.Sorensen.FitMark.repository.WorkoutSessionRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class WorkoutSessionService {
-    final private EntityFinder finder;
-   final private WorkoutSessionRepository repository;
+    private final EntityFinder finder;
+    private final WorkoutSessionRepository repository;
+    private final SetLogRepository setLogRepository;
+    private final ExerciseRepository exerciseRepository;
 
-    public WorkoutSessionService(EntityFinder finder, WorkoutSessionRepository repository) {
+    public WorkoutSessionService(EntityFinder finder,
+                                 WorkoutSessionRepository repository,
+                                 SetLogRepository setLogRepository,
+                                 ExerciseRepository exerciseRepository) {
         this.finder = finder;
         this.repository = repository;
+        this.setLogRepository = setLogRepository;
+        this.exerciseRepository = exerciseRepository;
     }
 
-    public StartWorkOutSessionResponse startWorkoutSession(UUID userId, UUID splitId,UUID workoutID) {
+    public StartWorkOutSessionResponse startWorkoutSession(UUID userId, UUID splitId, UUID workoutID) {
 
-        var workoutOpt = finder.workout(workoutID);
-        var userOpt = finder.user(userId);
+        var workout = finder.workout(workoutID);
+        var user = finder.user(userId);
 
-        if (workoutOpt.getUser() == null || !workoutOpt.getUser().getId().equals(userId)) {
+        if (workout.getUser() == null || !workout.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("Workout does not belong to user");
         }
 
-        if (workoutOpt.getSplit() == null || !workoutOpt.getSplit().getId().equals(splitId)) {
+        if (workout.getSplit() == null || !workout.getSplit().getId().equals(splitId)) {
             throw new IllegalArgumentException("Workout does not belong to split");
         }
 
         WorkoutSession workoutSession = WorkoutSession.builder()
-                .user(userOpt)
-                .workout(workoutOpt)
+                .user(user)
+                .workout(workout)
                 .workoutDate(OffsetDateTime.now())
                 .completed(false)
                 .build();
 
         workoutSession = repository.save(workoutSession);
 
-        List <ExerciseSessionResponse> exercises = workoutOpt.getExercises().
-                stream().map(e-> new ExerciseSessionResponse(  e.getId(),
+        List<ExerciseSessionResponse> exercises = workout.getExercises()
+                .stream()
+                .map(e -> new ExerciseSessionResponse(
+                        e.getId(),
                         e.getName(),
                         e.getSets(),
                         e.getLastTopSetReps(),
                         e.getWeight(),
-                        e.getPosition())).toList();
-
+                        e.getPosition()))
+                .toList();
 
         return new StartWorkOutSessionResponse(
                 workoutSession.getId(),
-                workoutOpt.getId(),
-                workoutOpt.getTitle(),
+                workout.getId(),
+                workout.getTitle(),
                 workoutSession.getWorkoutDate(),
                 workoutSession.getCompleted(),
                 exercises
         );
     }
 
+    public LogSetResponse logSet(UUID userId, UUID sessionId, LogSetRequest request) {
+        WorkoutSession session = finder.workoutSession(sessionId);
 
+        if (!session.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("Session does not belong to user");
+        }
+
+        if (session.getCompleted()) {
+            throw new IllegalStateException("Cannot log sets on a completed session");
+        }
+
+        Exercise exercise = finder.exercise(request.exerciseId());
+
+        if (!exercise.getWorkout().getId().equals(session.getWorkout().getId())) {
+            throw new IllegalArgumentException("Exercise does not belong to this workout");
+        }
+
+        SetLog setLog = SetLog.builder()
+                .workoutSession(session)
+                .exercise(exercise)
+                .setNumber(request.setNumber())
+                .reps(request.reps())
+                .setType(request.setType())
+                .weight(request.weight())
+                .restSeconds(request.restSeconds() != null ? request.restSeconds() : 0)
+                .build();
+
+        setLog = setLogRepository.save(setLog);
+
+        return new LogSetResponse(
+                setLog.getId(),
+                session.getId(),
+                exercise.getId(),
+                setLog.getSetNumber(),
+                setLog.getReps(),
+                setLog.getSetType(),
+                setLog.getWeight(),
+                setLog.getRestSeconds(),
+                setLog.getCreatedAt()
+        );
+    }
+
+    @Transactional
+    public FinishSessionResponse finishSession(UUID userId, UUID sessionId, FinishSessionRequest request) {
+        WorkoutSession session = finder.workoutSession(sessionId);
+
+        if (!session.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("Session does not belong to user");
+        }
+
+        if (session.getCompleted()) {
+            throw new IllegalStateException("Session is already completed");
+        }
+
+        session.setCompleted(true);
+        session.setDurationMinutes(request.durationMinutes());
+        session.setNotes(request.notes());
+
+        // Update exercise cache: for each exercise, find the heaviest WORK set and persist it
+        Map<UUID, List<SetLog>> setsByExercise = session.getSets().stream()
+                .filter(s -> s.getSetType() == SetType.WORK)
+                .collect(Collectors.groupingBy(s -> s.getExercise().getId()));
+
+        setsByExercise.forEach((exerciseId, sets) -> {
+            SetLog topSet = sets.stream()
+                    .max(Comparator.comparing(s -> s.getWeight() != null ? s.getWeight() : BigDecimal.ZERO))
+                    .orElse(null);
+
+            if (topSet != null) {
+                Exercise exercise = topSet.getExercise();
+                exercise.setWeight(topSet.getWeight());
+                exercise.setLastTopSetReps(topSet.getReps());
+                exerciseRepository.save(exercise);
+            }
+        });
+
+        session = repository.save(session);
+
+        // Resumo por exercício
+        Map<String, List<SetLog>> setsByExerciseName = session.getSets().stream()
+                .collect(Collectors.groupingBy(s -> s.getExercise().getName()));
+
+        List<ExerciseSummary> exerciseSummaries = setsByExerciseName.entrySet().stream()
+                .map(entry -> {
+                    String name = entry.getKey();
+                    List<SetLog> sets = entry.getValue();
+                    int totalSets = sets.size();
+                    int totalReps = sets.stream().mapToInt(SetLog::getReps).sum();
+                    BigDecimal totalVolume = sets.stream()
+                            .filter(s -> s.getWeight() != null)
+                            .map(s -> s.getWeight().multiply(BigDecimal.valueOf(s.getReps())))
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                    SetLog topSet = sets.stream()
+                            .filter(s -> s.getWeight() != null)
+                            .max(Comparator.comparing(s -> s.getWeight().multiply(BigDecimal.valueOf(s.getReps()))))
+                            .orElse(null);
+
+                    BigDecimal topSetWeight = topSet != null ? topSet.getWeight() : null;
+                    Integer topSetReps = topSet != null ? topSet.getReps() : null;
+                    BigDecimal topSetVolume = topSet != null
+                            ? topSet.getWeight().multiply(BigDecimal.valueOf(topSet.getReps()))
+                            : null;
+
+                    return new ExerciseSummary(name, totalSets, totalReps, totalVolume, topSetWeight, topSetReps, topSetVolume);
+                })
+                .toList();
+
+        BigDecimal totalVolumeKg = exerciseSummaries.stream()
+                .map(ExerciseSummary::totalVolume)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return new FinishSessionResponse(
+                session.getId(),
+                session.getWorkout().getId(),
+                session.getWorkout().getTitle(),
+                session.getWorkoutDate(),
+                session.getCompleted(),
+                session.getDurationMinutes(),
+                session.getNotes(),
+                exerciseSummaries,
+                totalVolumeKg
+        );
+    }
 }
