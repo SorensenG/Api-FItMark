@@ -49,7 +49,9 @@ public class Exercise {
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
-
+    @Column(name = "position", nullable = false)
+    @Builder.Default
+    private Integer position = 0;
 
     @JsonIgnoreProperties({"exercises", "workoutSessions", "user"})
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

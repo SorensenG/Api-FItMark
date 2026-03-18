@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.dialect.type.PostgreSQLEnumJdbcType;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -42,12 +44,12 @@ public class SetLog {
     private Integer reps;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "set_type", nullable = false, length = 30)
+    @JdbcType(PostgreSQLEnumJdbcType.class)
+    @Column(name = "set_type", nullable = false)
     private SetType setType;
 
     @Column(precision = 6, scale = 2)
     private BigDecimal weight;
-
     @Column(name = "rest_seconds", nullable = false)
     private Integer restSeconds = 0;
 

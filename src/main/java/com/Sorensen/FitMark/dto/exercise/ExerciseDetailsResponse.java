@@ -7,7 +7,8 @@ public record ExerciseDetailsResponse(
         int reps,
         double maxWeight,
         double lastWeight,
-        int lastReps
+        int lastReps,
+        int position
 
 
 ) {

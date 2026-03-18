@@ -1,10 +1,11 @@
 package com.Sorensen.FitMark.repository;
 
-import com.Sorensen.FitMark.entity.WorkoutSession;
+import com.Sorensen.FitMark.entity.SetLog;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.UUID;
+
 @Repository
-public interface WorkoutSessionRepository extends JpaRepository<WorkoutSession, UUID> {
+public interface SetLogRepository extends JpaRepository<SetLog, UUID> {
 }

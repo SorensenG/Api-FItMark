@@ -48,14 +48,18 @@ public class ExerciseService {
             throw new IllegalArgumentException("Workout does not belong to split");
         }
 
+        var exPos = exerciseRepository.findTopByWorkoutIdOrderByPositionDesc(workoutId).map(e -> e.getPosition() + 1).orElse(0);
+
+
         Exercise exercise = Exercise.builder()
                 .name(request.name())
                 .sets(request.sets())
                 .workout(workout)
+                .position(exPos)
                 .build();
 
         exerciseRepository.save(exercise);
-        return new AddExerciseResponse(exercise.getName(),exercise.getWorkout().getTitle(), user.getUsername());
+        return new AddExerciseResponse(exercise.getName(),exercise.getWorkout().getTitle(), user.getUsername(), exercise.getPosition());
 
     }
 
@@ -78,17 +82,18 @@ public class ExerciseService {
             throw  new IllegalArgumentException("Exercise does not belong to workout");
         }
 
-        Exercise updatedExercise = Exercise.builder()
-                .id(exercise.getId())
-                .name(request.name())
-                .sets(request.sets())
-                .workout(workout)
-                .build();
+        // PATCH seguro: altera só o que o usuário pode editar
+        exercise.setName(request.name());
+        exercise.setSets(request.sets());
 
-        exerciseRepository.save(updatedExercise);
+        exercise = exerciseRepository.save(exercise);
 
-        return new AddExerciseResponse(exercise.getName(),exercise.getWorkout().getTitle(), user.getUsername());
-
+        return new AddExerciseResponse(
+                exercise.getName(),
+                exercise.getWorkout().getTitle(),
+                user.getUsername(),
+                exercise.getPosition()
+        );
     }
 
     public boolean deleteExercise(UUID userid, @NotNull UUID exerciseId) {
