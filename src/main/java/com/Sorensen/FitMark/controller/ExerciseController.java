@@ -3,6 +3,8 @@ package com.Sorensen.FitMark.controller;
 
 import com.Sorensen.FitMark.dto.exercise.AddExerciseRequest;
 import com.Sorensen.FitMark.dto.exercise.AddExerciseResponse;
+import com.Sorensen.FitMark.dto.exercise.GetExerciseDetailsResponse;
+import com.Sorensen.FitMark.entity.Exercise;
 import com.Sorensen.FitMark.entity.User;
 import com.Sorensen.FitMark.repository.ExerciseRepository;
 import com.Sorensen.FitMark.service.ExerciseService;
@@ -13,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -74,7 +77,26 @@ public class ExerciseController {
         }
     }
 
+@GetMapping("/{exerciseId}")
+    public ResponseEntity<GetExerciseDetailsResponse> getExercise(@AuthenticationPrincipal User user,
+                                                                  @PathVariable UUID exerciseId){
 
+        var userid = user.getId();
+
+        Optional<GetExerciseDetailsResponse> exercise = exerciseService.getExercise(userid, exerciseId);
+        if (exercise.isPresent()){
+
+            return ResponseEntity.status(HttpStatus.OK).body((new GetExerciseDetailsResponse(exercise.get().name(),
+                    exercise.get().workoutName(),
+                    exercise.get().sets(),
+                    exercise.get().maxWeight(),
+                    exercise.get().lastTopReps(),
+                    exercise.get().positionInWorkout())));
+        }else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+}
 
 }
 
