@@ -3,6 +3,7 @@ package com.Sorensen.FitMark.service;
 import com.Sorensen.FitMark.Util.EntityFinder;
 import com.Sorensen.FitMark.dto.exercise.AddExerciseRequest;
 import com.Sorensen.FitMark.dto.exercise.AddExerciseResponse;
+import com.Sorensen.FitMark.dto.exercise.GetExerciseDetailsResponse;
 import com.Sorensen.FitMark.entity.Exercise;
 import com.Sorensen.FitMark.entity.Split;
 import com.Sorensen.FitMark.entity.User;
@@ -103,5 +104,17 @@ public class ExerciseService {
             exerciseRepository.delete(exercise);
             return true;
         }else return false;
+    }
+
+    public Optional<GetExerciseDetailsResponse> getExercise(UUID userid, UUID exerciseId) {
+    var exercise = entityFinder.exercise(exerciseId);
+    if (exercise.getWorkout().getUser().getId().equals(userid)){
+        return Optional.of(new GetExerciseDetailsResponse(exercise.getName(),
+                exercise.getWorkout().getTitle(),
+                exercise.getSets(),
+                exercise.getWeight(),
+                exercise.getLastTopSetReps(),
+                exercise.getPosition()));
+    }else return Optional.empty();
     }
 }
