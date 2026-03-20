@@ -1,6 +1,7 @@
 package com.Sorensen.FitMark.service;
 
 import com.Sorensen.FitMark.Util.EntityFinder;
+import com.Sorensen.FitMark.dto.ExerciseLog.ExerciseLogDetailsResponse;
 import com.Sorensen.FitMark.dto.exercise.AddExerciseRequest;
 import com.Sorensen.FitMark.dto.exercise.AddExerciseResponse;
 import com.Sorensen.FitMark.dto.exercise.GetExerciseDetailsResponse;
@@ -8,14 +9,13 @@ import com.Sorensen.FitMark.entity.Exercise;
 import com.Sorensen.FitMark.entity.Split;
 import com.Sorensen.FitMark.entity.User;
 import com.Sorensen.FitMark.entity.Workout;
-import com.Sorensen.FitMark.repository.ExerciseRepository;
-import com.Sorensen.FitMark.repository.SplitRepository;
-import com.Sorensen.FitMark.repository.UserRepository;
-import com.Sorensen.FitMark.repository.WorkoutRepository;
+import com.Sorensen.FitMark.repository.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -26,12 +26,14 @@ public class ExerciseService {
 
   private final EntityFinder entityFinder;
     private final ExerciseRepository exerciseRepository;
+    private final SetLogRepository setLogRepository;
 
 
-    public ExerciseService(UserRepository userRepository, WorkoutRepository workoutRepository, SplitRepository splitRepository, EntityFinder entityFinder, ExerciseRepository exerciseRepository) {
+    public ExerciseService(UserRepository userRepository, WorkoutRepository workoutRepository, SplitRepository splitRepository, EntityFinder entityFinder, ExerciseRepository exerciseRepository, SetLogRepository setLogRepository, ExerciseLogService exerciseLogService) {
         this.entityFinder = entityFinder;
 
         this.exerciseRepository = exerciseRepository;
+        this.setLogRepository = setLogRepository;
     }
 
 
@@ -116,5 +118,30 @@ public class ExerciseService {
                 exercise.getLastTopSetReps(),
                 exercise.getPosition()));
     }else return Optional.empty();
+    }
+
+    public Optional<List<ExerciseLogDetailsResponse>> getExerciseLogs(UUID userId, UUID exerciseId) {
+
+        var exercise = entityFinder.exercise(exerciseId);
+        if (!exercise.getWorkout().getUser().getId().equals(userId)) {
+            return Optional.empty();
+        }
+
+        var logs = setLogRepository.findByExerciseIdOrderByCreatedAtDesc(exerciseId);
+
+        var response = logs.stream()
+                .map(log -> new ExerciseLogDetailsResponse(
+                        exercise.getId(),
+                        exercise.getName(),
+                        log.getSetNumber(),
+                        log.getReps(),
+                        log.getWeight(),
+                        log.getRestSeconds(),
+                        exercise.getLastTopSetReps(),
+                        Date.from(log.getCreatedAt().toInstant())
+                ))
+                .toList();
+
+        return Optional.of(response);
     }
 }
