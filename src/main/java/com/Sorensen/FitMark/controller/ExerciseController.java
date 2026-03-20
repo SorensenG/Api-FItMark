@@ -1,6 +1,7 @@
 package com.Sorensen.FitMark.controller;
 
 
+import com.Sorensen.FitMark.dto.ExerciseLog.ExerciseLogDetailsResponse;
 import com.Sorensen.FitMark.dto.exercise.AddExerciseRequest;
 import com.Sorensen.FitMark.dto.exercise.AddExerciseResponse;
 import com.Sorensen.FitMark.dto.exercise.GetExerciseDetailsResponse;
@@ -15,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -96,8 +98,18 @@ public class ExerciseController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
+
 }
 
+    @GetMapping("/exerciselog/{exerciseId}")
+    public ResponseEntity<List<ExerciseLogDetailsResponse>> getExerciseLogs(@AuthenticationPrincipal User user,
+                                                                            @PathVariable UUID exerciseId){
+        var userId = user.getId();
+
+        Optional <List<ExerciseLogDetailsResponse>> exerciseLogs = exerciseService.getExerciseLogs(userId,exerciseId);
+
+        return ResponseEntity.status(HttpStatus.OK).body(exerciseLogs.orElse(List.of()));
+    }
 }
 
 
