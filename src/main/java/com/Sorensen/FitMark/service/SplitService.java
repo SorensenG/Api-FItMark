@@ -85,4 +85,17 @@ public class SplitService {
                 ))
                 .toList();
     }
+
+    public boolean deleteSplit(UUID userId, UUID splitId) {
+
+        var split = entityFinder.split(splitId);
+
+        if (split.getUser().getId().equals(userId)){
+            splitRepository.deleteById(splitId);
+            return true;
+
+    }else {
+            throw new IllegalArgumentException("Split does not belong to user");
+        }
+    }
 }

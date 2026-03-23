@@ -13,6 +13,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/splits")
@@ -57,5 +58,17 @@ public class SplitController {
 
     }
 
+    @DeleteMapping("{splitId}")
+    public ResponseEntity<Void> deleteSplit(@AuthenticationPrincipal User user, @PathVariable UUID splitId) {
+        var userId = user.getId();
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
 
+        var deleted = splitService.deleteSplit(userId, splitId);
+        if (!deleted) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
 }
