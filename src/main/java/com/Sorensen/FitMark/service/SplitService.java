@@ -1,13 +1,19 @@
 package com.Sorensen.FitMark.service;
 
+import com.Sorensen.FitMark.Util.EntityFinder;
+import com.Sorensen.FitMark.controller.SplitController;
+import com.Sorensen.FitMark.dto.exercise.ExerciseSessionResponse;
 import com.Sorensen.FitMark.dto.split.SplitCreateRequest;
 import com.Sorensen.FitMark.dto.split.SplitCreateResponse;
+import com.Sorensen.FitMark.dto.split.SplitDetailsResponse;
+import com.Sorensen.FitMark.dto.workout.StartWorkOutSessionResponse;
 import com.Sorensen.FitMark.entity.Split;
 import com.Sorensen.FitMark.entity.User;
 import com.Sorensen.FitMark.repository.SplitRepository;
 import com.Sorensen.FitMark.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -16,10 +22,12 @@ public class SplitService {
 
     private final SplitRepository splitRepository;
     private final UserRepository userRepository;
+    private final EntityFinder entityFinder;
 
-    public SplitService(SplitRepository splitRepository, UserRepository userRepository) {
+    public SplitService(SplitRepository splitRepository, UserRepository userRepository, EntityFinder entityFinder) {
         this.splitRepository = splitRepository;
         this.userRepository = userRepository;
+        this.entityFinder = entityFinder;
     }
 
     public SplitCreateResponse createSplit(SplitCreateRequest request, UUID userid) {
@@ -49,4 +57,32 @@ public class SplitService {
     }
 
 
+    public List<SplitDetailsResponse> getSplitsForUser(UUID userId) {
+        return splitRepository.findByUserId(userId).stream()
+                .map(split -> new SplitDetailsResponse(
+                        split.getId(),
+                        split.getName(),
+                        split.getCreatedAt(),
+                        split.getWorkouts().stream()
+                                .map(workout -> new StartWorkOutSessionResponse(
+                                        null,
+                                        workout.getId(),
+                                        workout.getTitle(),
+                                        null,
+                                        null,
+                                        workout.getExercises().stream()
+                                                .map(exercise -> new ExerciseSessionResponse(
+                                                        exercise.getId(),
+                                                        exercise.getName(),
+                                                        exercise.getSets(),
+                                                        exercise.getLastTopSetReps(),
+                                                        exercise.getWeight(),
+                                                        exercise.getPosition()
+                                                ))
+                                                .toList()
+                                ))
+                                .toList()
+                ))
+                .toList();
+    }
 }
