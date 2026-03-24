@@ -13,6 +13,7 @@ import com.Sorensen.FitMark.repository.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
@@ -20,11 +21,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 
-
 @Service
 public class ExerciseService {
 
-  private final EntityFinder entityFinder;
+    private final EntityFinder entityFinder;
     private final ExerciseRepository exerciseRepository;
     private final SetLogRepository setLogRepository;
 
@@ -62,7 +62,7 @@ public class ExerciseService {
                 .build();
 
         exerciseRepository.save(exercise);
-        return new AddExerciseResponse(exercise.getName(),exercise.getWorkout().getTitle(), user.getUsername(), exercise.getPosition());
+        return new AddExerciseResponse(exercise.getName(), exercise.getWorkout().getTitle(), user.getUsername(), exercise.getPosition());
 
     }
 
@@ -81,8 +81,8 @@ public class ExerciseService {
             throw new IllegalArgumentException("Workout does not belong to split");
         }
 
-        if (exercise.getWorkout()  == null || !exercise.getWorkout().getId().equals(workoutId)) {
-            throw  new IllegalArgumentException("Exercise does not belong to workout");
+        if (exercise.getWorkout() == null || !exercise.getWorkout().getId().equals(workoutId)) {
+            throw new IllegalArgumentException("Exercise does not belong to workout");
         }
 
         // PATCH seguro: altera só o que o usuário pode editar
@@ -98,27 +98,35 @@ public class ExerciseService {
                 exercise.getPosition()
         );
     }
-
+    @Transactional
     public boolean deleteExercise(UUID userid, @NotNull UUID exerciseId) {
 
         var exercise = entityFinder.exercise(exerciseId);
-        if (exercise.getWorkout().getUser().getId().equals(userid)){
+        if (exercise.getWorkout().getUser().getId().equals(userid)) {
+            var pos = exercise.getPosition();
+            var workoutId = exercise.getWorkout().getId();
+            exerciseRepository.decrementPositionsAfter(workoutId, pos);
             exerciseRepository.delete(exercise);
             return true;
-        }else return false;
+        } else return false;
     }
 
+
+
+
+
     public Optional<GetExerciseDetailsResponse> getExercise(UUID userid, UUID exerciseId) {
-    var exercise = entityFinder.exercise(exerciseId);
-    if (exercise.getWorkout().getUser().getId().equals(userid)){
-        return Optional.of(new GetExerciseDetailsResponse(exercise.getName(),
-                exercise.getWorkout().getTitle(),
-                exercise.getSets(),
-                exercise.getWeight(),
-                exercise.getLastTopSetReps(),
-                exercise.getPosition()));
-    }else return Optional.empty();
+        var exercise = entityFinder.exercise(exerciseId);
+        if (exercise.getWorkout().getUser().getId().equals(userid)) {
+            return Optional.of(new GetExerciseDetailsResponse(exercise.getName(),
+                    exercise.getWorkout().getTitle(),
+                    exercise.getSets(),
+                    exercise.getWeight(),
+                    exercise.getLastTopSetReps(),
+                    exercise.getPosition()));
+        } else return Optional.empty();
     }
+
 
     public Optional<List<ExerciseLogDetailsResponse>> getExerciseLogs(UUID userId, UUID exerciseId) {
 
