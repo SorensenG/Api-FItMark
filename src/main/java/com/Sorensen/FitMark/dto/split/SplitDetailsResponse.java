@@ -1,6 +1,6 @@
 package com.Sorensen.FitMark.dto.split;
 
-import com.Sorensen.FitMark.dto.workout.StartWorkOutSessionResponse;
+import com.Sorensen.FitMark.dto.exercise.ExerciseSessionResponse;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -10,5 +10,12 @@ public record SplitDetailsResponse(
         UUID id,
         String name,
         OffsetDateTime createdAt,
-        List<StartWorkOutSessionResponse> workouts
-) {}
+        List<WorkoutSummary> workouts
+) {
+    public record WorkoutSummary(
+            UUID id,
+            String title,
+            Integer position,
+            List<ExerciseSessionResponse> exercises
+    ) {}
+}

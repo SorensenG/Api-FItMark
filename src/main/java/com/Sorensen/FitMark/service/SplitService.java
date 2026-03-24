@@ -1,12 +1,11 @@
 package com.Sorensen.FitMark.service;
 
 import com.Sorensen.FitMark.Util.EntityFinder;
-import com.Sorensen.FitMark.controller.SplitController;
+import com.Sorensen.FitMark.Util.EntityFinder;
 import com.Sorensen.FitMark.dto.exercise.ExerciseSessionResponse;
 import com.Sorensen.FitMark.dto.split.SplitCreateRequest;
 import com.Sorensen.FitMark.dto.split.SplitCreateResponse;
 import com.Sorensen.FitMark.dto.split.SplitDetailsResponse;
-import com.Sorensen.FitMark.dto.workout.StartWorkOutSessionResponse;
 import com.Sorensen.FitMark.entity.Split;
 import com.Sorensen.FitMark.entity.User;
 import com.Sorensen.FitMark.repository.SplitRepository;
@@ -59,31 +58,29 @@ public class SplitService {
 
     public List<SplitDetailsResponse> getSplitsForUser(UUID userId) {
         return splitRepository.findByUserId(userId).stream()
-                .map(split -> new SplitDetailsResponse(
-                        split.getId(),
-                        split.getName(),
-                        split.getCreatedAt(),
-                        split.getWorkouts().stream()
-                                .map(workout -> new StartWorkOutSessionResponse(
-                                        null,
-                                        workout.getId(),
-                                        workout.getTitle(),
-                                        null,
-                                        null,
-                                        workout.getExercises().stream()
-                                                .map(exercise -> new ExerciseSessionResponse(
-                                                        exercise.getId(),
-                                                        exercise.getName(),
-                                                        exercise.getSets(),
-                                                        exercise.getLastTopSetReps(),
-                                                        exercise.getWeight(),
-                                                        exercise.getPosition()
-                                                ))
-                                                .toList()
+                .map(this::toSplitDetailsResponse)
+                .toList();
+    }
+
+    private SplitDetailsResponse toSplitDetailsResponse(Split split) {
+        var workouts = split.getWorkouts().stream()
+                .map(workout -> new SplitDetailsResponse.WorkoutSummary(
+                        workout.getId(),
+                        workout.getTitle(),
+                        workout.getPosition(),
+                        workout.getExercises().stream()
+                                .map(exercise -> new ExerciseSessionResponse(
+                                        exercise.getId(),
+                                        exercise.getName(),
+                                        exercise.getSets(),
+                                        exercise.getLastTopSetReps(),
+                                        exercise.getWeight(),
+                                        exercise.getPosition()
                                 ))
                                 .toList()
                 ))
                 .toList();
+        return new SplitDetailsResponse(split.getId(), split.getName(), split.getCreatedAt(), workouts);
     }
 
     public boolean deleteSplit(UUID userId, UUID splitId) {
@@ -97,5 +94,19 @@ public class SplitService {
     }else {
             throw new IllegalArgumentException("Split does not belong to user");
         }
+    }
+
+    public SplitDetailsResponse getSplitDetails(UUID userId, UUID splitId) {
+
+        var split = entityFinder.split(splitId);
+
+        if (split.getUser().getId().equals(userId)){
+            return toSplitDetailsResponse(split);
+        }else {
+            throw new IllegalArgumentException("Split does not belong to user");
+        }
+
+
+
     }
 }

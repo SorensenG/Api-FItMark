@@ -71,4 +71,18 @@ public class SplitController {
         }
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
+
+    @GetMapping("/{splitId}")
+    public ResponseEntity<SplitDetailsResponse> getSplitDetails(@AuthenticationPrincipal User user, @PathVariable UUID splitId) {
+        var userId = user.getId();
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        var splitDetails = splitService.getSplitDetails(userId, splitId);
+        if (splitDetails == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(splitDetails);
+    }
 }
