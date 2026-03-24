@@ -5,7 +5,6 @@ import com.Sorensen.FitMark.dto.ExerciseLog.ExerciseLogDetailsResponse;
 import com.Sorensen.FitMark.dto.exercise.AddExerciseRequest;
 import com.Sorensen.FitMark.dto.exercise.AddExerciseResponse;
 import com.Sorensen.FitMark.dto.exercise.GetExerciseDetailsResponse;
-import com.Sorensen.FitMark.entity.Exercise;
 import com.Sorensen.FitMark.entity.User;
 import com.Sorensen.FitMark.repository.ExerciseRepository;
 import com.Sorensen.FitMark.service.ExerciseService;
