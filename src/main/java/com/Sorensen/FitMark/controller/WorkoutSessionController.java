@@ -1,10 +1,6 @@
 package com.Sorensen.FitMark.controller;
 
-import com.Sorensen.FitMark.dto.workout.FinishSessionRequest;
-import com.Sorensen.FitMark.dto.workout.FinishSessionResponse;
-import com.Sorensen.FitMark.dto.workout.LogSetRequest;
-import com.Sorensen.FitMark.dto.workout.LogSetResponse;
-import com.Sorensen.FitMark.dto.workout.StartWorkOutSessionResponse;
+import com.Sorensen.FitMark.dto.workout.*;
 import com.Sorensen.FitMark.entity.User;
 import com.Sorensen.FitMark.service.WorkoutSessionService;
 import jakarta.validation.Valid;
@@ -13,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -66,4 +64,6 @@ public class WorkoutSessionController {
         var response = workoutSessionService.finishSession(user.getId(), sessionId, request);
         return ResponseEntity.ok(response);
     }
-}
+
+
+ }

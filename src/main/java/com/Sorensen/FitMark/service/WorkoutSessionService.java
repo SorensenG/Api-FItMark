@@ -15,25 +15,23 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class WorkoutSessionService {
     private final EntityFinder finder;
-    private final WorkoutSessionRepository repository;
+    private final WorkoutSessionRepository sessionRepository;
     private final SetLogRepository setLogRepository;
     private final ExerciseRepository exerciseRepository;
 
     public WorkoutSessionService(EntityFinder finder,
                                  WorkoutSessionRepository repository,
                                  SetLogRepository setLogRepository,
-                                 ExerciseRepository exerciseRepository) {
+                                 ExerciseRepository exerciseRepository)
+    {
         this.finder = finder;
-        this.repository = repository;
+        this.sessionRepository = repository;
         this.setLogRepository = setLogRepository;
         this.exerciseRepository = exerciseRepository;
     }
@@ -58,7 +56,7 @@ public class WorkoutSessionService {
                 .completed(false)
                 .build();
 
-        workoutSession = repository.save(workoutSession);
+        workoutSession = sessionRepository.save(workoutSession);
 
         List<ExerciseSessionResponse> exercises = workout.getExercises()
                 .stream()
@@ -157,7 +155,7 @@ public class WorkoutSessionService {
             }
         });
 
-        session = repository.save(session);
+        session = sessionRepository.save(session);
 
         // Resumo por exercício
         Map<String, List<SetLog>> setsByExerciseName = session.getSets().stream()
@@ -205,4 +203,83 @@ public class WorkoutSessionService {
                 totalVolumeKg
         );
     }
+
+    public List<ListAllSessionsResponse> listAllSessions(UUID id) {
+        finder.user(id);
+
+        return sessionRepository.findByUserIdOrderByWorkoutDateDesc(id)
+                .orElse(Collections.emptyList())
+                .stream()
+                .filter(WorkoutSession::getCompleted)  // só sessões concluídas
+                .map(s -> new ListAllSessionsResponse(
+                        s.getId(),
+                        s.getWorkout().getTitle(),
+                        s.getNotes(),
+                        s.getCompleted(),
+                        s.getDurationMinutes(),
+                        s.getWorkoutDate()
+                ))
+                .toList();
+    }
+
+    public AbandonSessionResponse abandonSession(UUID userId, UUID sessionId) {
+        WorkoutSession session = finder.workoutSession(sessionId);
+
+        if (!session.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("Session does not belong to user");
+        }
+
+        if (session.getCompleted()) {
+            throw new IllegalStateException("Cannot abandon a completed session");
+        }
+
+        if (session.getAbandoned()) {
+            throw new IllegalStateException("Session is already abandoned");
+        }
+
+        session.setAbandoned(true);
+        sessionRepository.save(session);
+
+        return new AbandonSessionResponse(session.getId(), session.getAbandoned());
+    }
+
+    public SessionDetailsResponse getSessionDetails(UUID userId, UUID sessionId) {
+        WorkoutSession session = finder.workoutSession(sessionId);
+
+        if (!session.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("Session does not belong to user");
+        }
+
+        Map<Exercise, List<SetLog>> setsByExercise = session.getSets().stream()
+                .collect(Collectors.groupingBy(SetLog::getExercise));
+
+        List<ExerciseWithSetsResponse> exercises = setsByExercise.entrySet().stream()
+                .map(entry -> {
+                    Exercise ex = entry.getKey();
+                    List<SetLogDetails> sets = entry.getValue().stream()
+                            .sorted(Comparator.comparing(SetLog::getSetNumber))
+                            .map(s -> new SetLogDetails(
+                                    s.getSetNumber(),
+                                    s.getReps(),
+                                    s.getWeight(),
+                                    s.getSetType(),
+                                    s.getRestSeconds()
+                            ))
+                            .toList();
+                    return new ExerciseWithSetsResponse(ex.getId(), ex.getName(), sets);
+                })
+                .toList();
+
+        return new SessionDetailsResponse(
+                session.getId(),
+                session.getWorkout().getId(),
+                session.getWorkout().getTitle(),
+                session.getWorkoutDate(),
+                session.getCompleted(),
+                session.getDurationMinutes(),
+                session.getNotes(),
+                exercises
+        );
+    }
 }
+

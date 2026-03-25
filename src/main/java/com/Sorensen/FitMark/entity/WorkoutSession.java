@@ -44,6 +44,9 @@ public class WorkoutSession {
     @Column(nullable = false)
     private Boolean completed = false;
 
+    @Column(nullable = false)
+    private Boolean abandoned = false;
+
     @Column(name = "duration_minutes")
     private Integer durationMinutes;
 
