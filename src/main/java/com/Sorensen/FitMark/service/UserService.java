@@ -1,9 +1,11 @@
 package com.Sorensen.FitMark.service;
 
 import com.Sorensen.FitMark.config.security.JWT.TokenConfig;
+import com.Sorensen.FitMark.dto.auth.LoginResponse;
 import com.Sorensen.FitMark.dto.auth.RegisterUserRequest;
 import com.Sorensen.FitMark.dto.auth.RegisterUserResponse;
 import com.Sorensen.FitMark.dto.auth.UserDetailsResponse;
+import com.Sorensen.FitMark.entity.RefreshToken;
 import com.Sorensen.FitMark.entity.User;
 import com.Sorensen.FitMark.repository.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -21,27 +23,29 @@ public class UserService {
     private final TokenConfig tokenConfig;
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
+    private final RefreshTokenService refreshTokenService;
 
 
 
-    public UserService(AuthenticationManager authenticationManager, TokenConfig tokenConfig, PasswordEncoder passwordEncoder, UserRepository userRepository) {
+    public UserService(AuthenticationManager authenticationManager, TokenConfig tokenConfig, PasswordEncoder passwordEncoder, UserRepository userRepository, RefreshTokenService refreshTokenService) {
         this.authenticationManager = authenticationManager;
         this.tokenConfig = tokenConfig;
         this.passwordEncoder = passwordEncoder;
         this.userRepository = userRepository;
+        this.refreshTokenService = refreshTokenService;
     }
 
 
-    public String login(String email, String password) {
+    public LoginResponse login(String email, String password) {
 
         UsernamePasswordAuthenticationToken userAndPassword = new UsernamePasswordAuthenticationToken(email, password);
         Authentication authentication = authenticationManager.authenticate(userAndPassword);
 
         User user = (User) authentication.getPrincipal();
-        String token = tokenConfig.generateToken(user);
+        String accessToken = tokenConfig.generateToken(user);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
 
-
-        return token;
+        return new LoginResponse(accessToken, refreshToken.getToken());
     }
 
 

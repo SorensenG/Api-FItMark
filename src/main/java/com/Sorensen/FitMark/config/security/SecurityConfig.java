@@ -31,7 +31,9 @@ public class SecurityConfig {
         return http.csrf(c -> c.disable()).cors(c -> c.configure(http)).sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS)).
                 authorizeHttpRequests(authorizeRequests -> authorizeRequests.dispatcherTypeMatchers(DispatcherType.ERROR).
                         permitAll().requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/auth/login").permitAll().anyRequest().authenticated())
+                        .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/refresh").permitAll()
+                        .anyRequest().authenticated())
  .addFilterBefore(securityFilterChain, UsernamePasswordAuthenticationFilter.class).build();
     }
 
