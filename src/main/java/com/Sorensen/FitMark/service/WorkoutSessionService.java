@@ -49,6 +49,13 @@ public class WorkoutSessionService {
             throw new IllegalArgumentException("Workout does not belong to split");
         }
 
+        //checar se o último treino foi finalizado
+        boolean onGoingSession = sessionRepository.hasActiveSession(userId).orElse(false);
+
+        if (onGoingSession) {
+            throw new IllegalStateException("Cannot start a new session while another is active");
+        }
+
         WorkoutSession workoutSession = WorkoutSession.builder()
                 .user(user)
                 .workout(workout)
