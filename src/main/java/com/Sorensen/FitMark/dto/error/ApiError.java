@@ -1,10 +1,12 @@
 package com.Sorensen.FitMark.dto.error;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.OffsetDateTime;
 import java.util.List;
 
+@Schema(description = "Resposta padrão de erro da API")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record ApiError(
         int status,
