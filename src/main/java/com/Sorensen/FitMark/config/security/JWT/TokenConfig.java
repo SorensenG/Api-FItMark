@@ -5,6 +5,7 @@ import com.Sorensen.FitMark.entity.User;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -15,13 +16,14 @@ import java.util.Optional;
 @Component
 public class TokenConfig {
 
-private String secret = "Secret";
+    @Value("${jwt.secret}")
+    private String secret;
 
 
 public String generateToken(User user) {
     return JWT.create()
             .withSubject(user.getEmail())
-            .withClaim("id", user.getId().toString()).withExpiresAt(Date.from(Instant.now().plus(30, ChronoUnit.DAYS)))
+            .withClaim("id", user.getId().toString()).withExpiresAt(Date.from(Instant.now().plus(30, ChronoUnit.MINUTES)))
             .withIssuedAt(Date.from(Instant.now()))
             .sign(com.auth0.jwt.algorithms.Algorithm.HMAC256(secret));
 
