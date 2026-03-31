@@ -35,6 +35,9 @@ build/
 
 # Spring Boot
 src/main/resources/application.properties
+
+# Variáveis de ambiente (credenciais locais)
+.env
 src/main/resources/application.yml
 src/main/resources/application-*.properties
 src/main/resources/application-*.yml
