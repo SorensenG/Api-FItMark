@@ -32,7 +32,7 @@ public class SecurityConfig {
                 authorizeHttpRequests(authorizeRequests -> authorizeRequests.dispatcherTypeMatchers(DispatcherType.ERROR).
                         permitAll().requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
                         .requestMatchers(HttpMethod.GET, "/teste").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.HEAD, "/teste").permitAll()                        .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/refresh").permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**",
