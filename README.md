@@ -22,6 +22,10 @@
 [![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
 [![Maven](https://img.shields.io/badge/Maven-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)](https://maven.apache.org/)
 [![Flyway](https://img.shields.io/badge/Flyway-CC0200?style=for-the-badge&logo=flyway&logoColor=white)](https://flywaydb.org/)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/features/actions)
+[![Render](https://img.shields.io/badge/Render-46E3B7?style=for-the-badge&logo=render&logoColor=black)](https://render.com/)
+[![Neon](https://img.shields.io/badge/Neon-00E599?style=for-the-badge&logo=neon&logoColor=black)](https://neon.tech/)
 
 <br/>
 
@@ -62,7 +66,8 @@ Esqueca planilhas. Esqueca apps genéricos. O FitMark foi pensado para quem leva
 
 ## Endpoints
 
-> **Base URL:** `http://localhost:8080`
+> **Base URL local:** `http://localhost:8080`
+> **Base URL producao:** `https://<seu-servico>.onrender.com`
 > Rotas marcadas com 🔒 exigem `Authorization: Bearer <token>`
 
 <br/>
@@ -154,12 +159,48 @@ Esqueca planilhas. Esqueca apps genéricos. O FitMark foi pensado para quem leva
 | Framework | Spring Boot 4 | Web, IoC, autoconfiguracao |
 | Seguranca | Spring Security + Auth0 JWT | Autenticacao e autorizacao |
 | Persistencia | Spring Data JPA + Hibernate | ORM e repositorios |
-| Banco | PostgreSQL | Armazenamento relacional |
+| Banco (local) | PostgreSQL 16 via Docker | Banco para desenvolvimento |
+| Banco (prod) | Neon (PostgreSQL serverless) | Banco em producao na nuvem |
 | Migracoes | Flyway | Versionamento do schema |
 | Boilerplate | Lombok | Getters, construtores, builders |
 | Build | Maven | Dependencias e empacotamento |
+| Containerizacao | Docker + Docker Compose | Empacotamento e ambiente local |
+| Registry | GitHub Container Registry (GHCR) | Armazena a imagem Docker |
+| CI/CD | GitHub Actions | Build e push automatico da imagem |
+| Deploy | Render | Hospedagem da API em producao |
 
 </div>
+
+<br/>
+
+---
+
+## CI/CD e Deploy
+
+```
+push para branch Docker
+        │
+        ▼
+GitHub Actions (docker-build.yml)
+  └── Build da imagem Docker (multi-stage)
+  └── Push para ghcr.io/sorenseng/api-fitmark:latest
+        │
+        ▼
+Render detecta nova imagem no GHCR
+  └── Pull e redeploy automatico
+        │
+        ▼
+API rodando com banco Neon (PostgreSQL serverless)
+```
+
+**Variaveis de ambiente no Render:**
+
+| Variavel | Descricao |
+|---|---|
+| `SPRING_DATASOURCE_URL` | URL de conexao do Neon (`jdbc:postgresql://...`) |
+| `SPRING_DATASOURCE_USERNAME` | Usuario do banco Neon |
+| `SPRING_DATASOURCE_PASSWORD` | Senha do banco Neon |
+| `JWT_SECRET` | Segredo para assinar os tokens JWT |
 
 <br/>
 
@@ -210,13 +251,9 @@ WorkoutSession  ←  iniciada por Workout
 
 ## Como rodar
 
-### Pre-requisitos
+### Opcao 1 — Docker Compose (recomendado)
 
-- Java 17+
-- PostgreSQL rodando em `localhost:5432`
-- Maven 3.8+
-
-<br/>
+Pre-requisito: [Docker](https://docs.docker.com/get-docker/) instalado.
 
 **1. Clone o repositorio**
 
@@ -225,33 +262,54 @@ git clone https://github.com/SorensenG/Api-FitMark.git
 cd Api-FitMark
 ```
 
-**2. Crie o banco de dados**
+**2. Crie o arquivo `.env` na raiz**
+
+```env
+DB_NAME=Api-FitMark
+DB_USER=seu_usuario
+DB_PASSWORD=sua_senha
+JWT_SECRET=seu_secret_jwt_aqui
+```
+
+**3. Suba os containers**
+
+```bash
+docker compose up --build
+```
+
+> Isso sobe a API na porta `8080` e um PostgreSQL 16 local. As migracoes Flyway rodam automaticamente.
+
+**4. Teste se esta no ar**
+
+```bash
+curl http://localhost:8080/teste
+```
+
+<br/>
+
+### Opcao 2 — Sem Docker (Maven direto)
+
+Pre-requisitos: Java 17+, PostgreSQL em `localhost:5432`, Maven 3.8+
+
+**1. Crie o banco**
 
 ```sql
 CREATE DATABASE "Api-FitMark";
 ```
 
-**3. Configure `application.properties`**
+**2. Configure `src/main/resources/application.properties`**
 
 ```properties
 spring.datasource.url=jdbc:postgresql://localhost:5432/Api-FitMark
 spring.datasource.username=seu_usuario
 spring.datasource.password=sua_senha
-api.security.token.secret=seu_secret_jwt_aqui
+jwt.secret=seu_secret_jwt_aqui
 ```
 
-**4. Suba a aplicacao**
+**3. Suba a aplicacao**
 
 ```bash
 ./mvnw spring-boot:run
-```
-
-> As migracoes Flyway sao aplicadas automaticamente na inicializacao.
-
-**5. Teste se esta no ar**
-
-```bash
-curl http://localhost:8080/teste
 ```
 
 <br/>
