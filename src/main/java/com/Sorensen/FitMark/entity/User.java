@@ -34,7 +34,7 @@ public class User implements UserDetails {
     @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
     private OffsetDateTime createdAt;
 
-    @Column(name = "profile_photo_url", length = 512)
+    @Column(name = "profile_photo_url", columnDefinition = "text")
     private String profilePhotoUrl;
 
     // templates do usuário
