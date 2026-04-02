@@ -2,6 +2,7 @@ package com.Sorensen.FitMark.controller;
 
 import com.Sorensen.FitMark.dto.error.ApiError;
 import com.Sorensen.FitMark.dto.user.ListUserWorkoutsResponse;
+import com.Sorensen.FitMark.dto.user.UpdateProfilePhotoRequest;
 import com.Sorensen.FitMark.dto.workout.AbandonSessionResponse;
 import com.Sorensen.FitMark.dto.workout.ListAllSessionsResponse;
 import com.Sorensen.FitMark.dto.workout.SessionDetailsResponse;
@@ -16,6 +17,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -29,10 +31,12 @@ import java.util.UUID;
 @RequestMapping("/users")
 public class UserController {
 
+    private final UserService userService;
     private final WorkoutService workoutService;
     private final WorkoutSessionService workoutSessionService;
 
     public UserController(UserService userService, WorkoutService workoutService, WorkoutSessionService workoutSessionService) {
+        this.userService = userService;
         this.workoutService = workoutService;
         this.workoutSessionService = workoutSessionService;
     }
@@ -114,5 +118,22 @@ public class UserController {
         }
         AbandonSessionResponse response = workoutSessionService.abandonSession(user.getId(), sessionId);
         return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Atualizar foto de perfil", description = "Define ou atualiza a URL da foto de perfil do usuário.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Foto atualizada com sucesso"),
+            @ApiResponse(responseCode = "401", description = "Access token ausente ou inválido",
+                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
+    @PatchMapping("/profile-photo")
+    public ResponseEntity<Void> updateProfilePhoto(
+            @AuthenticationPrincipal User user,
+            @Valid @RequestBody UpdateProfilePhotoRequest request) {
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        userService.updateProfilePhoto(user.getId(), request.profilePhotoUrl());
+        return ResponseEntity.ok().build();
     }
 }

@@ -71,7 +71,14 @@ public class UserService {
         if (user.isEmpty()) {
             throw new IllegalArgumentException("User not found");
         }
-        return new UserDetailsResponse(user.get().getId(), user.get().getUsername(), user.get().getEmail(),user.get().getCreatedAt());
+        return new UserDetailsResponse(user.get().getId(), user.get().getUsername(), user.get().getEmail(),user.get().getCreatedAt(), user.get().getProfilePhotoUrl());
+    }
+
+    public void updateProfilePhoto(UUID userId, String url) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        user.setProfilePhotoUrl(url);
+        userRepository.save(user);
     }
 }
 

@@ -34,6 +34,9 @@ public class User implements UserDetails {
     @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
     private OffsetDateTime createdAt;
 
+    @Column(name = "profile_photo_url", length = 512)
+    private String profilePhotoUrl;
+
     // templates do usuário
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties({"user"})
