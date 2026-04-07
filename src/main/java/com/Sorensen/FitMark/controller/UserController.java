@@ -3,6 +3,7 @@ package com.Sorensen.FitMark.controller;
 import com.Sorensen.FitMark.dto.error.ApiError;
 import com.Sorensen.FitMark.dto.user.ListUserWorkoutsResponse;
 import com.Sorensen.FitMark.dto.user.UpdateProfilePhotoRequest;
+import com.Sorensen.FitMark.dto.workout.ActiveSessionResponse;
 import com.Sorensen.FitMark.dto.workout.AbandonSessionResponse;
 import com.Sorensen.FitMark.dto.workout.ListAllSessionsResponse;
 import com.Sorensen.FitMark.dto.workout.SessionDetailsResponse;
@@ -54,6 +55,21 @@ public class UserController {
         }
         var res = workoutService.listWorkout(user.getId());
         return ResponseEntity.status(HttpStatus.OK).body(new ListUserWorkoutsResponse(res.workouts(), res.totalWorkouts()));
+    }
+
+    @Operation(summary = "Buscar sessão ativa do usuário", description = "Retorna a sessão em andamento (completed=false e abandoned=false), ou 204 se não houver nenhuma.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Sessão ativa encontrada"),
+            @ApiResponse(responseCode = "204", description = "Nenhuma sessão ativa"),
+            @ApiResponse(responseCode = "401", description = "Access token ausente ou inválido",
+                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
+    @GetMapping("/sessions/active")
+    public ResponseEntity<ActiveSessionResponse> getActiveSession(@AuthenticationPrincipal User user) {
+        if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        return workoutSessionService.getActiveSession(user.getId())
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.noContent().build());
     }
 
     @Operation(summary = "Listar sessões concluídas do usuário", description = "Retorna apenas sessões com status completed=true, ordenadas por data decrescente.")

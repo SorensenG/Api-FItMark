@@ -229,6 +229,19 @@ public class WorkoutSessionService {
                 .toList();
     }
 
+    public Optional<ActiveSessionResponse> getActiveSession(UUID userId) {
+        finder.user(userId);
+        return sessionRepository
+                .findFirstByUserIdAndCompletedFalseAndAbandonedFalseOrderByWorkoutDateDesc(userId)
+                .map(s -> new ActiveSessionResponse(
+                        s.getId(),
+                        s.getWorkout().getId(),
+                        s.getWorkout().getSplit().getId(),
+                        s.getWorkout().getTitle(),
+                        s.getWorkoutDate()
+                ));
+    }
+
     public AbandonSessionResponse abandonSession(UUID userId, UUID sessionId) {
         WorkoutSession session = finder.workoutSession(sessionId);
 
