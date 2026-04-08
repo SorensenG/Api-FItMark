@@ -16,6 +16,7 @@ public record SplitDetailsResponse(
             UUID id,
             String title,
             Integer position,
+            String notes,
             List<ExerciseSessionResponse> exercises
     ) {}
 }
