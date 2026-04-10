@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-public record LogSetResponse(
+public record UpdateSetLogResponse(
         UUID setLogId,
         UUID sessionId,
         UUID exerciseId,
@@ -15,7 +15,6 @@ public record LogSetResponse(
         SetType setType,
         BigDecimal weight,
         Integer restSeconds,
-        OffsetDateTime createdAt,
         String customLabel,
-        Boolean isNewPr
+        OffsetDateTime createdAt
 ) {}

@@ -105,15 +105,27 @@ public class WorkoutController {
         }
     }
 
-    @Operation(summary = "Atualizar um treino", description = "Endpoint a ser implementado.")
-    @ApiResponse(responseCode = "501", description = "Não implementado")
+    @Operation(summary = "Atualizar um treino", description = "Atualiza o título e as notas do treino.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Treino atualizado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Treino não encontrado ou não pertence ao usuário",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+            @ApiResponse(responseCode = "401", description = "Access token ausente ou inválido",
+                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
     @PutMapping("/{workoutId}")
     public ResponseEntity<WorkoutResponse> updateWorkout(
             @AuthenticationPrincipal User user,
             @PathVariable UUID splitId,
             @PathVariable UUID workoutId,
             @Valid @RequestBody CreateWorkoutRequest req) {
-        // A ser implementado
-        return null;
+
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        var workout = workoutService.updateWorkout(user.getId(), workoutId, req);
+        return ResponseEntity.ok(new WorkoutResponse(
+                workout.id(), workout.userId(), workout.splitID(),
+                workout.userName(), workout.pos(), workout.title(), workout.exercises(), workout.notes()));
     }
 }
