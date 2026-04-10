@@ -102,6 +102,34 @@ public class SplitController {
         return ResponseEntity.status(HttpStatus.OK).body(splitDetails);
     }
 
+    @Operation(summary = "Renomear um split")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Split atualizado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Split não pertence ao usuário autenticado",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+            @ApiResponse(responseCode = "401", description = "Access token ausente ou inválido",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+            @ApiResponse(responseCode = "404", description = "Split não encontrado",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+            @ApiResponse(responseCode = "409", description = "Já existe um split com este nome para o usuário",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+            @ApiResponse(responseCode = "422", description = "Campo title ausente ou em branco",
+                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
+    @PutMapping("/{splitId}")
+    public ResponseEntity<SplitDetailsResponse> updateSplit(
+            @AuthenticationPrincipal User user,
+            @Parameter(description = "ID do split") @PathVariable UUID splitId,
+            @Valid @RequestBody SplitCreateRequest request) {
+
+        var userId = user.getId();
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        var updated = splitService.updateSplit(userId, splitId, request);
+        return ResponseEntity.ok(updated);
+    }
+
     @Operation(summary = "Deletar um split", description = "Remove o split e todos os treinos associados a ele.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Split deletado com sucesso"),

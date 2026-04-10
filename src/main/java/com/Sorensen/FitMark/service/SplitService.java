@@ -84,6 +84,19 @@ public class SplitService {
         return new SplitDetailsResponse(split.getId(), split.getName(), split.getCreatedAt(), workouts);
     }
 
+    public SplitDetailsResponse updateSplit(UUID userId, UUID splitId, SplitCreateRequest request) {
+        var split = entityFinder.split(splitId);
+
+        if (!split.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("Split does not belong to user");
+        }
+
+        split.setName(request.title());
+        splitRepository.save(split);
+
+        return toSplitDetailsResponse(split);
+    }
+
     public boolean deleteSplit(UUID userId, UUID splitId) {
 
         var split = entityFinder.split(splitId);
