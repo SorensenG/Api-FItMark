@@ -90,6 +90,37 @@ public class WorkoutSessionController {
     }
 
     @Operation(
+            summary = "Editar série registrada",
+            description = "Edita uma série já registrada na sessão ativa. Não é permitido editar séries de sessões finalizadas ou abandonadas."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Série atualizada com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Série não pertence a esta sessão",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+            @ApiResponse(responseCode = "401", description = "Access token ausente ou inválido",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+            @ApiResponse(responseCode = "403", description = "Sessão já finalizada ou abandonada",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+            @ApiResponse(responseCode = "404", description = "Sessão ou série não encontrada",
+                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
+    @PatchMapping("/sessions/{sessionId}/sets/{setId}")
+    public ResponseEntity<UpdateSetLogResponse> updateSetLog(
+            @AuthenticationPrincipal User user,
+            @Parameter(description = "ID do split") @PathVariable UUID splitId,
+            @Parameter(description = "ID do treino") @PathVariable UUID workoutId,
+            @Parameter(description = "ID da sessão ativa") @PathVariable UUID sessionId,
+            @Parameter(description = "ID da série") @PathVariable UUID setId,
+            @Valid @RequestBody UpdateSetLogRequest request) {
+
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        var response = workoutSessionService.updateSetLog(user.getId(), sessionId, setId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
             summary = "Finalizar sessão de treino",
             description = "Marca a sessão como concluída, salva duração e notas, e atualiza o cache de peso/reps de cada exercício."
     )

@@ -68,6 +68,7 @@ public class SplitService {
                         workout.getId(),
                         workout.getTitle(),
                         workout.getPosition(),
+                        workout.getNotes(),
                         workout.getExercises().stream()
                                 .map(exercise -> new ExerciseSessionResponse(
                                         exercise.getId(),

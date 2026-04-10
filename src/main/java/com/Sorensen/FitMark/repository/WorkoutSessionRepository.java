@@ -22,4 +22,6 @@ public interface WorkoutSessionRepository extends JpaRepository<WorkoutSession, 
     LIMIT 1
 """)
     Optional<Boolean> hasActiveSession(@Param("userId") UUID userId);
+
+    Optional<WorkoutSession> findFirstByUserIdAndCompletedFalseAndAbandonedFalseOrderByWorkoutDateDesc(UUID userId);
 }

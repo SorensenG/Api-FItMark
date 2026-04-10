@@ -41,9 +41,11 @@ public class WorkoutSession {
     @Column(columnDefinition = "text")
     private String notes;
 
+    @Builder.Default
     @Column(nullable = false)
     private Boolean completed = false;
 
+    @Builder.Default
     @Column(nullable = false)
     private Boolean abandoned = false;
 

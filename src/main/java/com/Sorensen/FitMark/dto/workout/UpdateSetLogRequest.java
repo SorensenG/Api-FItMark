@@ -5,14 +5,11 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 
-public record LogSetRequest(
-        @NotNull UUID exerciseId,
-        @NotNull @Min(1) Integer setNumber,
+public record UpdateSetLogRequest(
         @NotNull @Min(0) Integer reps,
-        @NotNull SetType setType,
         BigDecimal weight,
+        @NotNull SetType setType,
         Integer restSeconds,
         String customLabel
 ) {}

@@ -17,6 +17,7 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.NoSuchElementException;
 
 @Service
 public class WorkoutSessionService {
@@ -103,6 +104,12 @@ public class WorkoutSessionService {
             throw new IllegalArgumentException("Exercise does not belong to this workout");
         }
 
+        // Detectar PR: peso maior que o cache atual e tipo WORK
+        boolean isNewPr = request.setType() == SetType.WORK
+                && request.weight() != null
+                && exercise.getWeight() != null
+                && request.weight().compareTo(exercise.getWeight()) > 0;
+
         SetLog setLog = SetLog.builder()
                 .workoutSession(session)
                 .exercise(exercise)
@@ -111,6 +118,7 @@ public class WorkoutSessionService {
                 .setType(request.setType())
                 .weight(request.weight())
                 .restSeconds(request.restSeconds() != null ? request.restSeconds() : 0)
+                .customLabel(request.customLabel())
                 .build();
 
         setLog = setLogRepository.save(setLog);
@@ -124,6 +132,52 @@ public class WorkoutSessionService {
                 setLog.getSetType(),
                 setLog.getWeight(),
                 setLog.getRestSeconds(),
+                setLog.getCreatedAt(),
+                setLog.getCustomLabel(),
+                isNewPr
+        );
+    }
+
+    public UpdateSetLogResponse updateSetLog(UUID userId, UUID sessionId, UUID setLogId, UpdateSetLogRequest request) {
+        WorkoutSession session = finder.workoutSession(sessionId);
+
+        if (!session.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("Session does not belong to user");
+        }
+
+        if (session.getCompleted()) {
+            throw new IllegalStateException("Cannot edit sets of a completed session");
+        }
+
+        if (session.getAbandoned()) {
+            throw new IllegalStateException("Cannot edit sets of an abandoned session");
+        }
+
+        SetLog setLog = setLogRepository.findById(setLogId)
+                .orElseThrow(() -> new NoSuchElementException("SetLog not found"));
+
+        if (!setLog.getWorkoutSession().getId().equals(sessionId)) {
+            throw new IllegalArgumentException("SetLog does not belong to this session");
+        }
+
+        setLog.setReps(request.reps());
+        setLog.setWeight(request.weight());
+        setLog.setSetType(request.setType());
+        setLog.setRestSeconds(request.restSeconds() != null ? request.restSeconds() : 0);
+        setLog.setCustomLabel(request.customLabel());
+
+        setLog = setLogRepository.save(setLog);
+
+        return new UpdateSetLogResponse(
+                setLog.getId(),
+                session.getId(),
+                setLog.getExercise().getId(),
+                setLog.getSetNumber(),
+                setLog.getReps(),
+                setLog.getSetType(),
+                setLog.getWeight(),
+                setLog.getRestSeconds(),
+                setLog.getCustomLabel(),
                 setLog.getCreatedAt()
         );
     }
@@ -227,6 +281,19 @@ public class WorkoutSessionService {
                         s.getWorkoutDate()
                 ))
                 .toList();
+    }
+
+    public Optional<ActiveSessionResponse> getActiveSession(UUID userId) {
+        finder.user(userId);
+        return sessionRepository
+                .findFirstByUserIdAndCompletedFalseAndAbandonedFalseOrderByWorkoutDateDesc(userId)
+                .map(s -> new ActiveSessionResponse(
+                        s.getId(),
+                        s.getWorkout().getId(),
+                        s.getWorkout().getSplit().getId(),
+                        s.getWorkout().getTitle(),
+                        s.getWorkoutDate()
+                ));
     }
 
     public AbandonSessionResponse abandonSession(UUID userId, UUID sessionId) {

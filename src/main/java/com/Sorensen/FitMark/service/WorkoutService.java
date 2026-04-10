@@ -132,10 +132,24 @@ public class WorkoutService {
 
     }
 
-    public WorkoutResponse updateWorkout(UUID id, UUID workoutId, @Valid CreateWorkoutRequest req) {
+    public WorkoutResponse updateWorkout(UUID userId, UUID workoutId, @Valid CreateWorkoutRequest req) {
+        Workout workout = repository.findByIdAndUserId(workoutId, userId)
+                .orElseThrow(() -> new IllegalArgumentException("Workout not found or does not belong to user"));
 
-    //A ser implementado
-        return null;
+        workout.setTitle(req.title());
+        workout.setNotes(req.notes());
+        workout = repository.save(workout);
+
+        return new WorkoutResponse(
+                workout.getId(),
+                workout.getUser().getId(),
+                workout.getSplit() != null ? workout.getSplit().getId() : null,
+                workout.getUser().getUsername(),
+                workout.getPosition(),
+                workout.getTitle(),
+                workout.getExercises(),
+                workout.getNotes()
+        );
     }
 
 }

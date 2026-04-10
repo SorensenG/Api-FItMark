@@ -1,0 +1,46 @@
+name: Build & Push Docker Image
+
+on:
+  push:
+    branches:
+      - Docker
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Login no GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extrair metadata da imagem
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/api-fitmark
+          tags: |
+            type=sha,prefix=sha-
+            type=ref,event=branch
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: Build e Push da imagem
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Trigger deploy no Render
+        run: curl -s "${{ secrets.RENDER_DEPLOY_HOOK }}"
