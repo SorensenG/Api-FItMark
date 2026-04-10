@@ -88,6 +88,12 @@ public class ExerciseService {
         // PATCH seguro: altera só o que o usuário pode editar
         exercise.setName(request.name());
         exercise.setSets(request.sets());
+        if (request.weight() != null) {
+            exercise.setWeight(request.weight());
+        }
+        if (request.lastTopSetReps() != null) {
+            exercise.setLastTopSetReps(request.lastTopSetReps());
+        }
 
         exercise = exerciseRepository.save(exercise);
 
