@@ -5,6 +5,7 @@ import com.Sorensen.FitMark.dto.error.ApiError;
 import com.Sorensen.FitMark.dto.exercise.AddExerciseRequest;
 import com.Sorensen.FitMark.dto.exercise.AddExerciseResponse;
 import com.Sorensen.FitMark.dto.exercise.GetExerciseDetailsResponse;
+import com.Sorensen.FitMark.dto.exercise.ReorderExercisesRequest;
 import com.Sorensen.FitMark.entity.User;
 import com.Sorensen.FitMark.repository.ExerciseRepository;
 import com.Sorensen.FitMark.service.ExerciseService;
@@ -91,6 +92,24 @@ public class ExerciseController {
                 exercise.workoutName(),
                 exercise.Username(),
                 exercise.exercisePosition()));
+    }
+
+    @Operation(summary = "Reordenar exercícios", description = "Atualiza a posição de múltiplos exercícios de um treino.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Posições atualizadas com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Exercício não pertence ao treino",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+            @ApiResponse(responseCode = "401", description = "Access token ausente ou inválido",
+                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
+    @PatchMapping("/reorder")
+    public ResponseEntity<Void> reorderExercises(
+            @AuthenticationPrincipal @NotNull User user,
+            @PathVariable @NotNull UUID workoutId,
+            @RequestBody @NotNull ReorderExercisesRequest request) {
+
+        exerciseService.reorderExercises(user.getId(), workoutId, request);
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "Deletar exercício", description = "Remove o exercício e reordena as posições dos demais no treino.")
