@@ -5,6 +5,7 @@ import com.Sorensen.FitMark.dto.ExerciseLog.ExerciseLogDetailsResponse;
 import com.Sorensen.FitMark.dto.exercise.AddExerciseRequest;
 import com.Sorensen.FitMark.dto.exercise.AddExerciseResponse;
 import com.Sorensen.FitMark.dto.exercise.GetExerciseDetailsResponse;
+import com.Sorensen.FitMark.dto.exercise.ReorderExercisesRequest;
 import com.Sorensen.FitMark.entity.Exercise;
 import com.Sorensen.FitMark.entity.Split;
 import com.Sorensen.FitMark.entity.User;
@@ -133,6 +134,22 @@ public class ExerciseService {
         } else return Optional.empty();
     }
 
+
+    @Transactional
+    public void reorderExercises(UUID userId, UUID workoutId, ReorderExercisesRequest request) {
+        var workout = entityFinder.workout(workoutId);
+        if (!workout.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("Workout does not belong to user");
+        }
+        for (var item : request.exercises()) {
+            var exercise = entityFinder.exercise(item.id());
+            if (!exercise.getWorkout().getId().equals(workoutId)) {
+                throw new IllegalArgumentException("Exercise does not belong to workout");
+            }
+            exercise.setPosition(item.position());
+            exerciseRepository.save(exercise);
+        }
+    }
 
     public Optional<List<ExerciseLogDetailsResponse>> getExerciseLogs(UUID userId, UUID exerciseId) {
 

@@ -6,6 +6,7 @@ import com.Sorensen.FitMark.dto.exercise.ExerciseSessionResponse;
 import com.Sorensen.FitMark.dto.split.SplitCreateRequest;
 import com.Sorensen.FitMark.dto.split.SplitCreateResponse;
 import com.Sorensen.FitMark.dto.split.SplitDetailsResponse;
+import com.Sorensen.FitMark.dto.split.SplitUpdateRequest;
 import com.Sorensen.FitMark.entity.Split;
 import com.Sorensen.FitMark.entity.User;
 import com.Sorensen.FitMark.repository.SplitRepository;
@@ -82,6 +83,18 @@ public class SplitService {
                 ))
                 .toList();
         return new SplitDetailsResponse(split.getId(), split.getName(), split.getCreatedAt(), workouts);
+    }
+
+    public SplitDetailsResponse updateSplit(UUID userId, UUID splitId, SplitUpdateRequest request) {
+        var split = entityFinder.split(splitId);
+
+        if (!split.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("Split does not belong to user");
+        }
+
+        split.setName(request.title());
+        splitRepository.save(split);
+        return toSplitDetailsResponse(split);
     }
 
     public boolean deleteSplit(UUID userId, UUID splitId) {
