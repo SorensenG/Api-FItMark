@@ -8,5 +8,6 @@ public enum SetType {
     BACKOFF,
     AMRAP,
     REST_PAUSE,
-    SUPERSET
+    SUPERSET,
+    CUSTOM
 }
