@@ -1,53 +1,64 @@
 package com.Sorensen.FitMark.service;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
+
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class EmailService {
 
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
 
-    private final JavaMailSender mailSender;
+    private final RestClient brevoRestClient;
 
-    @Value("${MAIL_USERNAME}")
-    private String fromAddress;
+    @Value("${MAIL_FROM}")
+    private String fromEmail;
 
-    public EmailService(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
+    @Value("${MAIL_FROM_NAME:FitMark}")
+    private String fromName;
+
+    public EmailService(@Qualifier("brevoRestClient") RestClient brevoRestClient) {
+        this.brevoRestClient = brevoRestClient;
     }
 
     @Async
     public void sendPasswordResetCode(String toEmail, String code) {
+        Map<String, Object> body = Map.of(
+                "sender", Map.of("name", fromName, "email", fromEmail),
+                "to", List.of(Map.of("email", toEmail)),
+                "subject", "FitMark — Código de redefinição de senha",
+                "textContent", """
+                        Olá,
+
+                        Recebemos uma solicitação para redefinir a senha da sua conta FitMark.
+
+                        Seu código de verificação é:
+
+                        %s
+
+                        O código é válido por 15 minutos. Não compartilhe com ninguém.
+
+                        Se você não solicitou a redefinição, ignore este e-mail.
+
+                        — Equipe FitMark
+                        """.formatted(code)
+        );
+
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromAddress);
-            message.setTo(toEmail);
-            message.setSubject("FitMark — Código de redefinição de senha");
-            message.setText("""
-                    Olá,
-
-                    Recebemos uma solicitação para redefinir a senha da sua conta FitMark.
-
-                    Seu código de verificação é:
-
-                    %s
-
-                    O código é válido por 15 minutos. Não compartilhe com ninguém.
-
-                    Se você não solicitou a redefinição, ignore este e-mail.
-
-                    — Equipe FitMark
-                    """.formatted(code));
-
-            mailSender.send(message);
-        } catch (Exception ex) {
-            log.error("Falha ao enviar e-mail de redefinição para {}", toEmail, ex);
+            brevoRestClient.post()
+                    .uri("/smtp/email")
+                    .body(body)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (Exception e) {
+            log.error("Falha ao enviar e-mail de redefinição para {}: {}", toEmail, e.getMessage());
         }
     }
 }
