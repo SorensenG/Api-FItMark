@@ -5,6 +5,7 @@ import com.Sorensen.FitMark.dto.auth.*;
 import com.Sorensen.FitMark.dto.error.ApiError;
 import com.Sorensen.FitMark.entity.RefreshToken;
 import com.Sorensen.FitMark.entity.User;
+import com.Sorensen.FitMark.service.PasswordResetService;
 import com.Sorensen.FitMark.service.RefreshTokenService;
 import com.Sorensen.FitMark.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,11 +30,13 @@ public class AuthController {
     private final UserService service;
     private final RefreshTokenService refreshTokenService;
     private final TokenConfig tokenConfig;
+    private final PasswordResetService passwordResetService;
 
-    public AuthController(UserService service, RefreshTokenService refreshTokenService, TokenConfig tokenConfig) {
+    public AuthController(UserService service, RefreshTokenService refreshTokenService, TokenConfig tokenConfig, PasswordResetService passwordResetService) {
         this.service = service;
         this.refreshTokenService = refreshTokenService;
         this.tokenConfig = tokenConfig;
+        this.passwordResetService = passwordResetService;
     }
 
     @Operation(summary = "Registrar novo usuário")
@@ -105,6 +108,36 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@Valid @RequestBody RefreshTokenRequest request, @AuthenticationPrincipal User user) {
         refreshTokenService.revokeRefreshToken(request.refreshToken());
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Solicitar código de redefinição de senha",
+            description = "Envia um código de 6 dígitos para o e-mail informado. Sempre retorna 202 independente de o e-mail existir.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "202", description = "Solicitação recebida — se o e-mail existir, o código será enviado"),
+            @ApiResponse(responseCode = "422", description = "E-mail inválido",
+                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
+    @SecurityRequirements
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        passwordResetService.requestReset(request.email());
+        return ResponseEntity.accepted().build();
+    }
+
+    @Operation(summary = "Redefinir senha com código",
+            description = "Valida o código de 6 dígitos e redefine a senha do usuário.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Senha redefinida com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Código incorreto, expirado ou já utilizado",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+            @ApiResponse(responseCode = "422", description = "Campos inválidos",
+                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
+    @SecurityRequirements
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        passwordResetService.verifyCodeAndReset(request.email(), request.code(), request.newPassword());
         return ResponseEntity.noContent().build();
     }
 
