@@ -3,6 +3,7 @@ package com.Sorensen.FitMark.config;
 import com.Sorensen.FitMark.dto.error.ApiError;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.mail.MailException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -144,6 +145,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
                 .body(new ApiError(403, "Forbidden", "Access denied"));
+    }
+
+    // Falha ao enviar e-mail
+    @ExceptionHandler(MailException.class)
+    public ResponseEntity<ApiError> handleMailException(MailException ex) {
+        return ResponseEntity
+                .status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(new ApiError(503, "Service Unavailable", "Falha ao enviar o e-mail. Verifique o endereço informado e tente novamente."));
     }
 
     // Catch-all — nunca deve vazar detalhes internos
