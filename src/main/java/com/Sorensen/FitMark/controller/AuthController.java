@@ -5,6 +5,7 @@ import com.Sorensen.FitMark.dto.auth.*;
 import com.Sorensen.FitMark.dto.error.ApiError;
 import com.Sorensen.FitMark.entity.RefreshToken;
 import com.Sorensen.FitMark.entity.User;
+import com.Sorensen.FitMark.security.ratelimit.RateLimitService;
 import com.Sorensen.FitMark.service.PasswordResetService;
 import com.Sorensen.FitMark.service.RefreshTokenService;
 import com.Sorensen.FitMark.service.UserService;
@@ -15,11 +16,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.Duration;
+import java.util.Locale;
 
 
 @Tag(name = "Auth", description = "Registro, login, renovação de token e logout")
@@ -31,12 +36,18 @@ public class AuthController {
     private final RefreshTokenService refreshTokenService;
     private final TokenConfig tokenConfig;
     private final PasswordResetService passwordResetService;
+    private final RateLimitService rateLimitService;
 
-    public AuthController(UserService service, RefreshTokenService refreshTokenService, TokenConfig tokenConfig, PasswordResetService passwordResetService) {
+    public AuthController(UserService service,
+                          RefreshTokenService refreshTokenService,
+                          TokenConfig tokenConfig,
+                          PasswordResetService passwordResetService,
+                          RateLimitService rateLimitService) {
         this.service = service;
         this.refreshTokenService = refreshTokenService;
         this.tokenConfig = tokenConfig;
         this.passwordResetService = passwordResetService;
+        this.rateLimitService = rateLimitService;
     }
 
     @Operation(summary = "Registrar novo usuário")
@@ -64,8 +75,24 @@ public class AuthController {
     })
     @SecurityRequirements
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest login) {
-        var loginResponse = service.login(login.email(), login.password());
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest login, HttpServletRequest request) {
+        String normalizedEmail = normalizeEmail(login.email());
+        String clientIp = resolveClientIp(request);
+
+        rateLimitService.assertAllowed(
+                "auth:login:ip:" + clientIp,
+                12,
+                Duration.ofMinutes(1),
+                "Muitas tentativas de login. Tente novamente em instantes"
+        );
+        rateLimitService.assertAllowed(
+                "auth:login:email:" + normalizedEmail,
+                8,
+                Duration.ofMinutes(5),
+                "Muitas tentativas para este e-mail. Tente novamente mais tarde"
+        );
+
+        var loginResponse = service.login(normalizedEmail, login.password());
         return ResponseEntity.ok(loginResponse);
     }
 
@@ -89,9 +116,9 @@ public class AuthController {
 
         User user = validated.getUser();
         String newAccessToken = tokenConfig.generateToken(user);
-        RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(user);
+        String newRefreshToken = refreshTokenService.createRefreshToken(user);
 
-        return ResponseEntity.ok(new LoginResponse(newAccessToken, newRefreshToken.getToken()));
+        return ResponseEntity.ok(new LoginResponse(newAccessToken, newRefreshToken));
     }
 
     @Operation(
@@ -120,8 +147,24 @@ public class AuthController {
     })
     @SecurityRequirements
     @PostMapping("/forgot-password")
-    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
-        passwordResetService.requestReset(request.email());
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request, HttpServletRequest servletRequest) {
+        String email = normalizeEmail(request.email());
+        String clientIp = resolveClientIp(servletRequest);
+
+        rateLimitService.assertAllowed(
+                "auth:forgot:ip:" + clientIp,
+                6,
+                Duration.ofMinutes(10),
+                "Muitas solicitações de código. Aguarde alguns minutos"
+        );
+        rateLimitService.assertAllowed(
+                "auth:forgot:email:" + email,
+                3,
+                Duration.ofMinutes(15),
+                "Esse e-mail recebeu muitos códigos recentemente. Aguarde para tentar novamente"
+        );
+
+        passwordResetService.requestReset(email);
         return ResponseEntity.accepted().build();
     }
 
@@ -136,8 +179,24 @@ public class AuthController {
     })
     @SecurityRequirements
     @PostMapping("/reset-password")
-    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
-        passwordResetService.verifyCodeAndReset(request.email(), request.code(), request.newPassword());
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request, HttpServletRequest servletRequest) {
+        String email = normalizeEmail(request.email());
+        String clientIp = resolveClientIp(servletRequest);
+
+        rateLimitService.assertAllowed(
+                "auth:reset:ip:" + clientIp,
+                10,
+                Duration.ofMinutes(10),
+                "Muitas tentativas de redefinição. Aguarde alguns minutos"
+        );
+        rateLimitService.assertAllowed(
+                "auth:reset:email:" + email,
+                6,
+                Duration.ofMinutes(15),
+                "Muitas tentativas para esse e-mail. Solicite um novo código depois"
+        );
+
+        passwordResetService.verifyCodeAndReset(email, request.code(), request.newPassword());
         return ResponseEntity.noContent().build();
     }
 
@@ -154,5 +213,21 @@ public class AuthController {
         }
         var userDetails = service.getUserDetails(user.getId());
         return ResponseEntity.status(HttpStatus.OK).body(userDetails);
+    }
+
+    private static String normalizeEmail(String email) {
+        return email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private static String resolveClientIp(HttpServletRequest request) {
+        String forwardedFor = request.getHeader("X-Forwarded-For");
+        if (forwardedFor != null && !forwardedFor.isBlank()) {
+            return forwardedFor.split(",")[0].trim();
+        }
+        String realIp = request.getHeader("X-Real-IP");
+        if (realIp != null && !realIp.isBlank()) {
+            return realIp.trim();
+        }
+        return request.getRemoteAddr();
     }
 }

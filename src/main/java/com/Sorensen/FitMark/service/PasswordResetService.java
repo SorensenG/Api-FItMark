@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 import java.time.OffsetDateTime;
+import java.util.Locale;
 import java.util.Optional;
 
 @Service
@@ -38,7 +39,8 @@ public class PasswordResetService {
 
     @Transactional
     public void requestReset(String email) {
-        Optional<UserDetails> userDetails = userRepository.findUserByEmail(email);
+        String normalizedEmail = normalizeEmail(email);
+        Optional<UserDetails> userDetails = userRepository.findUserByEmail(normalizedEmail);
 
         // Não expõe se o e-mail existe ou não
         if (userDetails.isEmpty()) return;
@@ -54,16 +56,17 @@ public class PasswordResetService {
 
         PasswordResetToken resetToken = new PasswordResetToken();
         resetToken.setUser(user);
-        resetToken.setCode(code);
+        resetToken.setCode(passwordEncoder.encode(code));
         resetToken.setExpiresAt(OffsetDateTime.now().plusMinutes(CODE_EXPIRY_MINUTES));
         tokenRepository.save(resetToken);
 
-        emailService.sendPasswordResetCode(email, code);
+        emailService.sendPasswordResetCode(normalizedEmail, code);
     }
 
     @Transactional
     public void verifyCodeAndReset(String email, String code, String newPassword) {
-        Optional<UserDetails> userDetails = userRepository.findUserByEmail(email);
+        String normalizedEmail = normalizeEmail(email);
+        Optional<UserDetails> userDetails = userRepository.findUserByEmail(normalizedEmail);
 
         if (userDetails.isEmpty()) {
             throw new IllegalArgumentException("Código inválido ou expirado");
@@ -87,7 +90,7 @@ public class PasswordResetService {
             throw new IllegalArgumentException("Muitas tentativas incorretas. Solicite um novo código");
         }
 
-        if (!resetToken.getCode().equals(code)) {
+        if (!passwordEncoder.matches(code, resetToken.getCode())) {
             resetToken.setAttempts(resetToken.getAttempts() + 1);
             tokenRepository.save(resetToken);
             int remaining = MAX_ATTEMPTS - resetToken.getAttempts();
@@ -104,5 +107,9 @@ public class PasswordResetService {
 
         resetToken.setUsed(true);
         tokenRepository.save(resetToken);
+    }
+
+    private static String normalizeEmail(String email) {
+        return email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
     }
 }

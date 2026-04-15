@@ -2,6 +2,7 @@ package com.Sorensen.FitMark.dto.auth;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record ResetPasswordRequest(
@@ -14,6 +15,10 @@ public record ResetPasswordRequest(
         String code,
 
         @NotBlank(message = "Nova senha é obrigatória")
-        @Size(min = 6, max = 128, message = "Senha deve ter entre 6 e 128 caracteres")
+        @Size(min = 8, max = 128, message = "Senha deve ter entre 8 e 128 caracteres")
+        @Pattern(
+                regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z\\d]).+$",
+                message = "Senha deve conter maiúscula, minúscula, número e caractere especial"
+        )
         String newPassword
 ) {}
