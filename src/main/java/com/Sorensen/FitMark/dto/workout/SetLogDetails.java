@@ -9,5 +9,6 @@ public record SetLogDetails(
         Integer reps,
         BigDecimal weight,
         SetType setType,
-        Integer restSeconds
+        Integer restSeconds,
+        String customLabel
 ) {}

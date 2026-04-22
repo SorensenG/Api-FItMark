@@ -278,7 +278,8 @@ public class WorkoutSessionService {
                         s.getNotes(),
                         s.getCompleted(),
                         s.getDurationMinutes(),
-                        s.getWorkoutDate()
+                        s.getWorkoutDate(),
+                        s.getWorkout().getNotes()
                 ))
                 .toList();
     }
@@ -337,7 +338,8 @@ public class WorkoutSessionService {
                                     s.getReps(),
                                     s.getWeight(),
                                     s.getSetType(),
-                                    s.getRestSeconds()
+                                    s.getRestSeconds(),
+                                    s.getCustomLabel()
                             ))
                             .toList();
                     return new ExerciseWithSetsResponse(ex.getId(), ex.getName(), sets);

@@ -10,8 +10,8 @@ import java.util.UUID;
 @Getter
 @Setter
 @Entity
-@Table(name = "refresh_tokens")
-public class RefreshToken {
+@Table(name = "password_reset_tokens")
+public class PasswordResetToken {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -21,14 +21,17 @@ public class RefreshToken {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "token", nullable = false, unique = true, length = 128)
-    private String tokenHash;
+    @Column(nullable = false, length = 255)
+    private String code;
+
+    @Column(nullable = false)
+    private boolean used = false;
+
+    @Column(nullable = false)
+    private int attempts = 0;
 
     @Column(name = "expires_at", nullable = false)
     private OffsetDateTime expiresAt;
-
-    @Column(nullable = false)
-    private boolean revoked = false;
 
     @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
     private OffsetDateTime createdAt;

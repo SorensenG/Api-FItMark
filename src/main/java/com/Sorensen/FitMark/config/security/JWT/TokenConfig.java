@@ -5,6 +5,7 @@ import com.Sorensen.FitMark.entity.User;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +19,13 @@ public class TokenConfig {
 
     @Value("${jwt.secret}")
     private String secret;
+
+    @PostConstruct
+    public void validateSecretStrength() {
+        if (secret == null || secret.trim().length() < 32) {
+            throw new IllegalStateException("JWT_SECRET must have at least 32 characters");
+        }
+    }
 
 
 public String generateToken(User user) {

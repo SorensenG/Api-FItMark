@@ -169,7 +169,9 @@ public class ExerciseService {
                         log.getWeight(),
                         log.getRestSeconds(),
                         exercise.getLastTopSetReps(),
-                        Date.from(log.getCreatedAt().toInstant())
+                        Date.from(log.getCreatedAt().toInstant()),
+                        log.getSetType(),
+                        log.getCustomLabel()
                 ))
                 .toList();
 

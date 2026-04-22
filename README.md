@@ -30,7 +30,7 @@
 <br/>
 
 ![Status](https://img.shields.io/badge/status-em_desenvolvimento-yellow?style=flat-square)
-![Version](https://img.shields.io/badge/versão-0.0.1--SNAPSHOT-blue?style=flat-square)
+![Version](https://img.shields.io/badge/versão-1.0.0-blue?style=flat-square)
 ![License](https://img.shields.io/badge/licença-MIT-green?style=flat-square)
 
 </div>
@@ -77,8 +77,25 @@ Esqueca planilhas. Esqueca apps genéricos. O FitMark foi pensado para quem leva
 | Metodo | Rota | Descricao |
 |---|---|---|
 | `POST` | `/auth/register` | Cadastro de novo usuario |
-| `POST` | `/auth/login` | Login — retorna o token JWT |
+| `POST` | `/auth/login` | Login — retorna accessToken e refreshToken |
+| `POST` | `/auth/refresh` | Renova o par de tokens (rotacao de refreshToken) |
+| `POST` | `/auth/logout` | 🔒 Revoga o refreshToken e encerra a sessao |
 | `GET` | `/auth/me` | 🔒 Perfil do usuario autenticado |
+| `POST` | `/auth/forgot-password` | Solicita codigo de redefinicao de senha por e-mail |
+| `POST` | `/auth/reset-password` | Redefine a senha com o codigo recebido |
+
+<br/>
+
+### 👤 Usuarios — `/users`
+
+| Metodo | Rota | Descricao |
+|---|---|---|
+| `GET` | `/users/workouts` | 🔒 Todos os treinos do usuario |
+| `GET` | `/users/sessions` | 🔒 Historico de sessoes concluidas |
+| `GET` | `/users/sessions/active` | 🔒 Sessao de treino ativa (204 se nenhuma) |
+| `GET` | `/users/sessions/{sessionId}` | 🔒 Detalhes de uma sessao com sets agrupados |
+| `PATCH` | `/users/sessions/{sessionId}/abandon` | 🔒 Abandona a sessao ativa |
+| `PATCH` | `/users/profile-photo` | 🔒 Atualiza URL da foto de perfil |
 
 <br/>
 
@@ -89,7 +106,8 @@ Esqueca planilhas. Esqueca apps genéricos. O FitMark foi pensado para quem leva
 | `GET` | `/splits` | 🔒 Lista todos os splits do usuario |
 | `POST` | `/splits` | 🔒 Cria um novo split |
 | `GET` | `/splits/{splitId}` | 🔒 Detalhes de um split |
-| `DELETE` | `/splits/{splitId}` | 🔒 Remove o split |
+| `PUT` | `/splits/{splitId}` | 🔒 Atualiza o titulo do split |
+| `DELETE` | `/splits/{splitId}` | 🔒 Remove o split e seus treinos |
 
 <br/>
 
@@ -99,30 +117,32 @@ Esqueca planilhas. Esqueca apps genéricos. O FitMark foi pensado para quem leva
 |---|---|---|
 | `POST` | `/splits/{splitId}/workouts` | 🔒 Cria workout no split |
 | `GET` | `/splits/{splitId}/workouts/{workoutId}` | 🔒 Detalhes do workout |
+| `PUT` | `/splits/{splitId}/workouts/{workoutId}` | 🔒 Atualiza titulo e notas do workout |
 | `DELETE` | `/splits/{splitId}/workouts/{workoutId}` | 🔒 Remove o workout |
-| `GET` | `/users/workouts` | 🔒 Todos os workouts do usuario |
 
 <br/>
 
-### 💪 Exercicios — `.../workouts/{workoutId}/exercises`
+### 💪 Exercicios — `/splits/{splitId}/workouts/{workoutId}/exercises`
 
 | Metodo | Rota | Descricao |
 |---|---|---|
-| `POST` | `.../exercises` | 🔒 Adiciona exercicio |
-| `GET` | `.../exercises/{exerciseId}` | 🔒 Detalhes do exercicio |
-| `PUT` | `.../exercises/{exerciseId}` | 🔒 Atualiza exercicio |
-| `DELETE` | `.../exercises/{exerciseId}` | 🔒 Remove exercicio |
-| `GET` | `.../exercises/exerciselog/{exerciseId}` | 🔒 Historico de series |
+| `POST` | `.../exercises` | 🔒 Adiciona exercicio ao treino |
+| `GET` | `.../exercises/{exerciseId}` | 🔒 Detalhes do exercicio (carga atual, reps) |
+| `PUT` | `.../exercises/{exerciseId}` | 🔒 Atualiza nome e numero de series |
+| `PATCH` | `.../exercises/reorder` | 🔒 Reordena posicoes dos exercicios |
+| `DELETE` | `.../exercises/{exerciseId}` | 🔒 Remove exercicio e reordena os demais |
+| `GET` | `.../exercises/exerciselog/{exerciseId}` | 🔒 Historico de series por exercicio |
 
 <br/>
 
-### ⏱️ Sessoes de Treino — `.../workouts/{workoutId}`
+### ⏱️ Sessoes de Treino — `/splits/{splitId}/workouts/{workoutId}`
 
 | Metodo | Rota | Descricao |
 |---|---|---|
 | `POST` | `.../workoutsession-start` | 🔒 Inicia sessao de treino |
 | `POST` | `.../sessions/{sessionId}/sets` | 🔒 Registra serie na sessao |
-| `PATCH` | `.../sessions/{sessionId}/finish` | 🔒 Finaliza sessao |
+| `PATCH` | `.../sessions/{sessionId}/sets/{setId}` | 🔒 Edita serie registrada |
+| `PATCH` | `.../sessions/{sessionId}/finish` | 🔒 Finaliza sessao e salva resumo |
 
 <br/>
 
@@ -201,6 +221,9 @@ API rodando com banco Neon (PostgreSQL serverless)
 | `SPRING_DATASOURCE_USERNAME` | Usuario do banco Neon |
 | `SPRING_DATASOURCE_PASSWORD` | Senha do banco Neon |
 | `JWT_SECRET` | Segredo para assinar os tokens JWT |
+| `BREVO_API_KEY` | Chave de API do Brevo para envio de e-mails |
+| `MAIL_FROM` | Endereco de e-mail remetente |
+| `MAIL_FROM_NAME` | Nome exibido no campo "De" (padrao: FitMark) |
 
 <br/>
 
@@ -327,9 +350,14 @@ Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5c...
 Fluxo:
 
 ```
-POST /auth/register  →  cria conta
-POST /auth/login     →  retorna { token: "..." }
-GET  /auth/me        →  valida e retorna perfil
+POST /auth/register        →  cria conta
+POST /auth/login           →  retorna { accessToken, refreshToken }
+GET  /auth/me              →  retorna perfil do usuario autenticado
+POST /auth/refresh         →  troca refreshToken por novo par de tokens
+POST /auth/logout          →  revoga o refreshToken
+
+POST /auth/forgot-password →  envia codigo de 6 digitos por e-mail
+POST /auth/reset-password  →  valida codigo e redefine a senha
 ```
 
 <br/>

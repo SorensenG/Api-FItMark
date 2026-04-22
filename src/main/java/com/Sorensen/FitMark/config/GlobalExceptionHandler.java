@@ -1,5 +1,6 @@
 package com.Sorensen.FitMark.config;
 
+import com.Sorensen.FitMark.security.ratelimit.RateLimitExceededException;
 import com.Sorensen.FitMark.dto.error.ApiError;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -144,6 +145,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
                 .body(new ApiError(403, "Forbidden", "Access denied"));
+    }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ApiError> handleRateLimitExceeded(RateLimitExceededException ex) {
+        return ResponseEntity
+                .status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(new ApiError(429, "Too Many Requests", ex.getMessage()));
     }
 
     // Catch-all — nunca deve vazar detalhes internos

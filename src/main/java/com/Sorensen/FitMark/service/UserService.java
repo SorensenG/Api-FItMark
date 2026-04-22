@@ -14,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -37,15 +38,16 @@ public class UserService {
 
 
     public LoginResponse login(String email, String password) {
+        String normalizedEmail = normalizeEmail(email);
 
-        UsernamePasswordAuthenticationToken userAndPassword = new UsernamePasswordAuthenticationToken(email, password);
+        UsernamePasswordAuthenticationToken userAndPassword = new UsernamePasswordAuthenticationToken(normalizedEmail, password);
         Authentication authentication = authenticationManager.authenticate(userAndPassword);
 
         User user = (User) authentication.getPrincipal();
         String accessToken = tokenConfig.generateToken(user);
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+        String refreshToken = refreshTokenService.createRefreshToken(user);
 
-        return new LoginResponse(accessToken, refreshToken.getToken());
+        return new LoginResponse(accessToken, refreshToken);
     }
 
 
@@ -53,7 +55,7 @@ public class UserService {
 
         User user = new User();
         user.setUsername(request.username());
-        user.setEmail(request.email());
+        user.setEmail(normalizeEmail(request.email()));
         user.setPasswordHash(passwordEncoder.encode(request.password()));
 
         userRepository.save(user);
@@ -79,6 +81,10 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         user.setProfilePhotoUrl(url);
         userRepository.save(user);
+    }
+
+    private static String normalizeEmail(String email) {
+        return email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
     }
 }
 
