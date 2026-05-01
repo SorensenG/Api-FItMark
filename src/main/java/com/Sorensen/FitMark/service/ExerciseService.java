@@ -38,6 +38,7 @@ public class ExerciseService {
     }
 
 
+    @Transactional
     public AddExerciseResponse addExercise(UUID userid, UUID splitId, UUID workoutId, @Valid AddExerciseRequest request) {
 
         var user = entityFinder.user(userid);
@@ -67,6 +68,7 @@ public class ExerciseService {
 
     }
 
+    @Transactional
     public AddExerciseResponse updateExercise(UUID userid, @NotNull UUID splitId, @NotNull UUID workoutId, @NotNull UUID exerciseId, @Valid AddExerciseRequest request) {
 
         var exercise = entityFinder.exercise(exerciseId);
@@ -122,6 +124,7 @@ public class ExerciseService {
 
 
 
+    @Transactional(readOnly = true)
     public Optional<GetExerciseDetailsResponse> getExercise(UUID userid, UUID exerciseId) {
         var exercise = entityFinder.exercise(exerciseId);
         if (exercise.getWorkout().getUser().getId().equals(userid)) {
@@ -151,6 +154,7 @@ public class ExerciseService {
         }
     }
 
+    @Transactional(readOnly = true)
     public Optional<List<ExerciseLogDetailsResponse>> getExerciseLogs(UUID userId, UUID exerciseId) {
 
         var exercise = entityFinder.exercise(exerciseId);

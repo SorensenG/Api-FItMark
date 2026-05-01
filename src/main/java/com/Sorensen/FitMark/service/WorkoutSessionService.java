@@ -89,12 +89,14 @@ public class WorkoutSessionService {
     }
 
     @Transactional
-    public LogSetResponse logSet(UUID userId, UUID sessionId, LogSetRequest request) {
+    public LogSetResponse logSet(UUID userId, UUID splitId, UUID workoutId, UUID sessionId, LogSetRequest request) {
         WorkoutSession session = finder.workoutSession(sessionId);
 
         if (!session.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("Session does not belong to user");
         }
+
+        validateSessionContext(session, splitId, workoutId);
 
         if (session.getCompleted()) {
             throw new IllegalStateException("Cannot log sets on a completed session");
@@ -102,7 +104,7 @@ public class WorkoutSessionService {
 
         Exercise exercise = finder.exercise(request.exerciseId());
 
-        if (!exercise.getWorkout().getId().equals(session.getWorkout().getId())) {
+        if (!exercise.getWorkout().getId().equals(workoutId)) {
             throw new IllegalArgumentException("Exercise does not belong to this workout");
         }
 
@@ -141,12 +143,14 @@ public class WorkoutSessionService {
     }
 
     @Transactional
-    public UpdateSetLogResponse updateSetLog(UUID userId, UUID sessionId, UUID setLogId, UpdateSetLogRequest request) {
+    public UpdateSetLogResponse updateSetLog(UUID userId, UUID splitId, UUID workoutId, UUID sessionId, UUID setLogId, UpdateSetLogRequest request) {
         WorkoutSession session = finder.workoutSession(sessionId);
 
         if (!session.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("Session does not belong to user");
         }
+
+        validateSessionContext(session, splitId, workoutId);
 
         if (session.getCompleted()) {
             throw new IllegalStateException("Cannot edit sets of a completed session");
@@ -186,12 +190,14 @@ public class WorkoutSessionService {
     }
 
     @Transactional
-    public FinishSessionResponse finishSession(UUID userId, UUID sessionId, FinishSessionRequest request) {
+    public FinishSessionResponse finishSession(UUID userId, UUID splitId, UUID workoutId, UUID sessionId, FinishSessionRequest request) {
         WorkoutSession session = finder.workoutSession(sessionId);
 
         if (!session.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("Session does not belong to user");
         }
+
+        validateSessionContext(session, splitId, workoutId);
 
         if (session.getCompleted()) {
             throw new IllegalStateException("Session is already completed");
@@ -363,5 +369,15 @@ public class WorkoutSessionService {
                 session.getNotes(),
                 exercises
         );
+    }
+
+    private void validateSessionContext(WorkoutSession session, UUID splitId, UUID workoutId) {
+        if (!session.getWorkout().getId().equals(workoutId)) {
+            throw new IllegalArgumentException("Session does not belong to workout");
+        }
+
+        if (session.getWorkout().getSplit() == null || !session.getWorkout().getSplit().getId().equals(splitId)) {
+            throw new IllegalArgumentException("Workout does not belong to split");
+        }
     }
 }

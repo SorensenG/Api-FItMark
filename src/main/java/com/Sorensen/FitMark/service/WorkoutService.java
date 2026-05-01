@@ -2,14 +2,15 @@ package com.Sorensen.FitMark.service;
 
 import com.Sorensen.FitMark.dto.user.ListUserWorkoutsResponse;
 import com.Sorensen.FitMark.dto.workout.CreateWorkoutRequest;
+import com.Sorensen.FitMark.dto.workout.WorkoutExerciseResponse;
 import com.Sorensen.FitMark.dto.workout.WorkoutResponse;
+import com.Sorensen.FitMark.entity.Exercise;
 import com.Sorensen.FitMark.entity.Split;
 import com.Sorensen.FitMark.entity.User;
 import com.Sorensen.FitMark.entity.Workout;
 import com.Sorensen.FitMark.repository.SplitRepository;
 import com.Sorensen.FitMark.repository.UserRepository;
 import com.Sorensen.FitMark.repository.WorkoutRepository;
-import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,6 +46,9 @@ public class WorkoutService {
             User present = user.get();
             Split presentSplit = split.get();
 
+            if (!presentSplit.getUser().getId().equals(userId)) {
+                throw new IllegalArgumentException("Split does not belong to user");
+            }
 
             Workout workout = Workout.builder()
                     .user(present)
@@ -57,28 +61,19 @@ public class WorkoutService {
             workout = repository.save(workout);
 
 
-            return new WorkoutResponse(
-                    workout.getId(),
-                    workout.getUser().getId(),
-                    workout.getSplit().getId(),
-                   workout.getUser().getUsername(),
-                    workout.getPosition(),
-                    workout.getTitle(),
-                    workout.getExercises(),
-                    workout.getNotes()
-            );
+            return toWorkoutResponse(workout);
         } else {
             throw new IllegalArgumentException("User not found");
         }
     }
 
     @Transactional
-    public boolean deleteWorkout(User user, UUID workoutId) {
-        if (!repository.existsByIdAndUserId(workoutId, user.getId())) {
+    public boolean deleteWorkout(User user, UUID splitId, UUID workoutId) {
+        if (!repository.existsByIdAndUserIdAndSplitId(workoutId, user.getId(), splitId)) {
 
             return false;
         } else {
-            repository.deleteByIdAndUserId(workoutId, user.getId());
+            repository.deleteByIdAndUserIdAndSplitId(workoutId, user.getId(), splitId);
             return true;
         }
     }
@@ -91,16 +86,7 @@ public class WorkoutService {
         if (user.isPresent()) {
             List<Workout> workouts = repository.findAllByUserId(userId);
             return new ListUserWorkoutsResponse(
-                    workouts.stream().map(workout -> new WorkoutResponse(
-                           workout.getId(),
-                            workout.getUser().getId(),
-                            workout.getSplit() != null ? workout.getSplit().getId() : null,
-                            workout.getUser().getUsername(),
-                            workout.getPosition(),
-                            workout.getTitle(),
-                            workout.getExercises(),
-                            workout.getNotes()
-                    )).toList(),
+                    workouts.stream().map(this::toWorkoutResponse).toList(),
                     workouts.size()
             );
         } else {
@@ -112,22 +98,12 @@ public class WorkoutService {
     }
 
     @Transactional(readOnly = true)
-    public WorkoutResponse getWorkout(UUID userId, UUID workoutId) {
+    public WorkoutResponse getWorkout(UUID userId, UUID splitId, UUID workoutId) {
 
-        Optional<Workout> workoutOpt = repository.findByIdAndUserId(workoutId, userId);
+        Optional<Workout> workoutOpt = repository.findByIdAndUserIdAndSplitId(workoutId, userId, splitId);
 
         if (workoutOpt.isPresent()) {
-            Workout workout = workoutOpt.get();
-            return new WorkoutResponse(
-                    workout.getId(),
-                    workout.getUser().getId(),
-                    workout.getSplit() != null ? workout.getSplit().getId() : null,
-                    workout.getUser().getUsername(),
-                    workout.getPosition(),
-                    workout.getTitle(),
-                    workout.getExercises(),
-                    workout.getNotes()
-            );
+            return toWorkoutResponse(workoutOpt.get());
         } else {
             throw new IllegalArgumentException("Workout not found");
         }
@@ -136,14 +112,18 @@ public class WorkoutService {
     }
 
     @Transactional
-    public WorkoutResponse updateWorkout(UUID userId, UUID workoutId, @Valid CreateWorkoutRequest req) {
-        Workout workout = repository.findByIdAndUserId(workoutId, userId)
+    public WorkoutResponse updateWorkout(UUID userId, UUID splitId, UUID workoutId, @Valid CreateWorkoutRequest req) {
+        Workout workout = repository.findByIdAndUserIdAndSplitId(workoutId, userId, splitId)
                 .orElseThrow(() -> new IllegalArgumentException("Workout not found or does not belong to user"));
 
         workout.setTitle(req.title());
         workout.setNotes(req.notes());
         workout = repository.save(workout);
 
+        return toWorkoutResponse(workout);
+    }
+
+    private WorkoutResponse toWorkoutResponse(Workout workout) {
         return new WorkoutResponse(
                 workout.getId(),
                 workout.getUser().getId(),
@@ -151,13 +131,25 @@ public class WorkoutService {
                 workout.getUser().getUsername(),
                 workout.getPosition(),
                 workout.getTitle(),
-                workout.getExercises(),
+                workout.getExercises().stream()
+                        .map(this::toWorkoutExerciseResponse)
+                        .toList(),
                 workout.getNotes()
         );
     }
 
+    private WorkoutExerciseResponse toWorkoutExerciseResponse(Exercise exercise) {
+        return new WorkoutExerciseResponse(
+                exercise.getId(),
+                exercise.getName(),
+                exercise.getSets(),
+                exercise.getLastTopSetReps(),
+                exercise.getWeight(),
+                exercise.getCreatedAt(),
+                exercise.getPosition()
+        );
+    }
 }
-
 
 
 

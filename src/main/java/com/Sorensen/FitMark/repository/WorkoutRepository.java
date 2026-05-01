@@ -16,6 +16,8 @@ public interface WorkoutRepository extends JpaRepository<Workout, UUID> {
 
     boolean existsByIdAndUserId(UUID workoutId, UUID userId);
 
+    boolean existsByIdAndUserIdAndSplitId(UUID workoutId, UUID userId, UUID splitId);
+
     Optional<Workout> findTopByUserIdAndSplitIdOrderByPositionDesc(UUID userId, UUID splitId);
 
     List<Workout> findByTitle(String title);
@@ -24,8 +26,11 @@ public interface WorkoutRepository extends JpaRepository<Workout, UUID> {
 
     Optional<Workout> findByIdAndUserId(UUID workoutId, UUID userId);
 
-    List<Workout> findAllByUserId(UUID userId);
-}
+    Optional<Workout> findByIdAndUserIdAndSplitId(UUID workoutId, UUID userId, UUID splitId);
 
+    List<Workout> findAllByUserId(UUID userId);
+
+    void deleteByIdAndUserIdAndSplitId(UUID workoutId, UUID userId, UUID splitId);
+}
 
 

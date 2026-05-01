@@ -85,7 +85,7 @@ public class WorkoutSessionController {
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        var response = workoutSessionService.logSet(user.getId(), sessionId, request);
+        var response = workoutSessionService.logSet(user.getId(), splitId, workoutId, sessionId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -116,7 +116,7 @@ public class WorkoutSessionController {
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        var response = workoutSessionService.updateSetLog(user.getId(), sessionId, setId, request);
+        var response = workoutSessionService.updateSetLog(user.getId(), splitId, workoutId, sessionId, setId, request);
         return ResponseEntity.ok(response);
     }
 
@@ -146,7 +146,7 @@ public class WorkoutSessionController {
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        var response = workoutSessionService.finishSession(user.getId(), sessionId, request);
+        var response = workoutSessionService.finishSession(user.getId(), splitId, workoutId, sessionId, request);
         return ResponseEntity.ok(response);
     }
 }

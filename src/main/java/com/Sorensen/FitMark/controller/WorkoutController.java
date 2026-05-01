@@ -74,7 +74,7 @@ public class WorkoutController {
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        var workoutOpt = workoutService.getWorkout(user.getId(), workoutId);
+        var workoutOpt = workoutService.getWorkout(user.getId(), splitId, workoutId);
         return ResponseEntity.status(HttpStatus.OK).body(
                 new WorkoutResponse(workoutOpt.id(), workoutOpt.userId(), workoutOpt.splitID(),
                         workoutOpt.userName(), workoutOpt.pos(), workoutOpt.title(), workoutOpt.exercises(), workoutOpt.notes()));
@@ -97,7 +97,7 @@ public class WorkoutController {
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        boolean deleted = workoutService.deleteWorkout(user, workoutId);
+        boolean deleted = workoutService.deleteWorkout(user, splitId, workoutId);
         if (deleted) {
             return ResponseEntity.status(HttpStatus.OK).build();
         } else {
@@ -123,7 +123,7 @@ public class WorkoutController {
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        var workout = workoutService.updateWorkout(user.getId(), workoutId, req);
+        var workout = workoutService.updateWorkout(user.getId(), splitId, workoutId, req);
         return ResponseEntity.ok(new WorkoutResponse(
                 workout.id(), workout.userId(), workout.splitID(),
                 workout.userName(), workout.pos(), workout.title(), workout.exercises(), workout.notes()));
