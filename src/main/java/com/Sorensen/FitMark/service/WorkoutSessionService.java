@@ -37,6 +37,7 @@ public class WorkoutSessionService {
         this.exerciseRepository = exerciseRepository;
     }
 
+    @Transactional
     public StartWorkOutSessionResponse startWorkoutSession(UUID userId, UUID splitId, UUID workoutID) {
 
         var workout = finder.workout(workoutID);
@@ -87,6 +88,7 @@ public class WorkoutSessionService {
         );
     }
 
+    @Transactional
     public LogSetResponse logSet(UUID userId, UUID sessionId, LogSetRequest request) {
         WorkoutSession session = finder.workoutSession(sessionId);
 
@@ -138,6 +140,7 @@ public class WorkoutSessionService {
         );
     }
 
+    @Transactional
     public UpdateSetLogResponse updateSetLog(UUID userId, UUID sessionId, UUID setLogId, UpdateSetLogRequest request) {
         WorkoutSession session = finder.workoutSession(sessionId);
 
@@ -265,6 +268,7 @@ public class WorkoutSessionService {
         );
     }
 
+    @Transactional(readOnly = true)
     public List<ListAllSessionsResponse> listAllSessions(UUID id) {
         finder.user(id);
 
@@ -284,6 +288,7 @@ public class WorkoutSessionService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public Optional<ActiveSessionResponse> getActiveSession(UUID userId) {
         finder.user(userId);
         return sessionRepository
@@ -297,6 +302,7 @@ public class WorkoutSessionService {
                 ));
     }
 
+    @Transactional
     public AbandonSessionResponse abandonSession(UUID userId, UUID sessionId) {
         WorkoutSession session = finder.workoutSession(sessionId);
 
@@ -318,6 +324,7 @@ public class WorkoutSessionService {
         return new AbandonSessionResponse(session.getId(), session.getAbandoned());
     }
 
+    @Transactional(readOnly = true)
     public SessionDetailsResponse getSessionDetails(UUID userId, UUID sessionId) {
         WorkoutSession session = finder.workoutSession(sessionId);
 
@@ -358,4 +365,3 @@ public class WorkoutSessionService {
         );
     }
 }
-

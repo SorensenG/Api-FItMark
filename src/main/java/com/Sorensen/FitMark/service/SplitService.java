@@ -12,6 +12,7 @@ import com.Sorensen.FitMark.entity.User;
 import com.Sorensen.FitMark.repository.SplitRepository;
 import com.Sorensen.FitMark.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -30,6 +31,7 @@ public class SplitService {
         this.entityFinder = entityFinder;
     }
 
+    @Transactional
     public SplitCreateResponse createSplit(SplitCreateRequest request, UUID userid) {
 
         Optional<User> user = userRepository.findById(userid);
@@ -57,6 +59,7 @@ public class SplitService {
     }
 
 
+    @Transactional(readOnly = true)
     public List<SplitDetailsResponse> getSplitsForUser(UUID userId) {
         return splitRepository.findByUserId(userId).stream()
                 .map(this::toSplitDetailsResponse)
@@ -85,6 +88,7 @@ public class SplitService {
         return new SplitDetailsResponse(split.getId(), split.getName(), split.getCreatedAt(), workouts);
     }
 
+    @Transactional
     public SplitDetailsResponse updateSplit(UUID userId, UUID splitId, SplitUpdateRequest request) {
         var split = entityFinder.split(splitId);
 
@@ -97,6 +101,7 @@ public class SplitService {
         return toSplitDetailsResponse(split);
     }
 
+    @Transactional
     public boolean deleteSplit(UUID userId, UUID splitId) {
 
         var split = entityFinder.split(splitId);
@@ -110,6 +115,7 @@ public class SplitService {
         }
     }
 
+    @Transactional(readOnly = true)
     public SplitDetailsResponse getSplitDetails(UUID userId, UUID splitId) {
 
         var split = entityFinder.split(splitId);

@@ -32,6 +32,7 @@ public class WorkoutService {
     }
 
 
+    @Transactional
     public WorkoutResponse createWorkout(UUID userId, CreateWorkoutRequest request, UUID splitId) {
 
         Optional<User> user = userRepository.findById(userId);
@@ -82,6 +83,7 @@ public class WorkoutService {
         }
     }
 
+    @Transactional(readOnly = true)
     public ListUserWorkoutsResponse listWorkout(UUID userId) {
 
         Optional<User> user = userRepository.findById(userId);
@@ -109,6 +111,7 @@ public class WorkoutService {
 
     }
 
+    @Transactional(readOnly = true)
     public WorkoutResponse getWorkout(UUID userId, UUID workoutId) {
 
         Optional<Workout> workoutOpt = repository.findByIdAndUserId(workoutId, userId);
@@ -132,6 +135,7 @@ public class WorkoutService {
 
     }
 
+    @Transactional
     public WorkoutResponse updateWorkout(UUID userId, UUID workoutId, @Valid CreateWorkoutRequest req) {
         Workout workout = repository.findByIdAndUserId(workoutId, userId)
                 .orElseThrow(() -> new IllegalArgumentException("Workout not found or does not belong to user"));
@@ -153,7 +157,6 @@ public class WorkoutService {
     }
 
 }
-
 
 
 
