@@ -224,6 +224,11 @@ API rodando com banco Neon (PostgreSQL serverless)
 | `BREVO_API_KEY` | Chave de API do Brevo para envio de e-mails |
 | `MAIL_FROM` | Endereco de e-mail remetente |
 | `MAIL_FROM_NAME` | Nome exibido no campo "De" (padrao: FitMark) |
+| `SPRING_FLYWAY_ENABLED` | Rode com `true` apenas quando quiser aplicar migracoes no boot |
+| `SPRING_JPA_HIBERNATE_DDL_AUTO` | Use `validate` apenas quando quiser validar schema no boot |
+| `DB_POOL_MAX_SIZE` | Maximo de conexoes da API com o banco (padrao: `1`) |
+| `DB_POOL_MIN_IDLE` | Conexoes ociosas mantidas abertas (padrao: `0`) |
+| `DB_POOL_IDLE_TIMEOUT` | Tempo para fechar conexoes ociosas em ms (padrao: `10000`) |
 
 <br/>
 

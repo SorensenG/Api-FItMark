@@ -31,6 +31,8 @@ services:
       MAIL_FROM: ${MAIL_FROM}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME}
       APP_SECURITY_EXPOSE_SWAGGER: ${APP_SECURITY_EXPOSE_SWAGGER:-false}
+      SPRING_FLYWAY_ENABLED: true
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
     depends_on:
       db:
         condition: service_healthy

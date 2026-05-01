@@ -18,10 +18,10 @@ public class EmailService {
 
     private final RestClient brevoRestClient;
 
-    @Value("${MAIL_FROM}")
+    @Value("${app.mail.from}")
     private String fromEmail;
 
-    @Value("${MAIL_FROM_NAME:FitMark}")
+    @Value("${app.mail.from-name:FitMark}")
     private String fromName;
 
     public EmailService(@Qualifier("brevoRestClient") RestClient brevoRestClient) {

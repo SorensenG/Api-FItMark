@@ -9,7 +9,7 @@ import org.springframework.web.client.RestClient;
 public class MailConfig {
 
     @Bean
-    public RestClient brevoRestClient(@Value("${BREVO_API_KEY}") String apiKey) {
+    public RestClient brevoRestClient(@Value("${app.mail.brevo-api-key}") String apiKey) {
         return RestClient.builder()
                 .baseUrl("https://api.brevo.com/v3")
                 .defaultHeader("api-key", apiKey)
