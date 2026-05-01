@@ -229,6 +229,9 @@ API rodando com banco Neon (PostgreSQL serverless)
 | `DB_POOL_MAX_SIZE` | Maximo de conexoes da API com o banco (padrao: `1`) |
 | `DB_POOL_MIN_IDLE` | Conexoes ociosas mantidas abertas (padrao: `0`) |
 | `DB_POOL_IDLE_TIMEOUT` | Tempo para fechar conexoes ociosas em ms (padrao: `10000`) |
+| `DB_POOL_CONNECTION_TIMEOUT` | Tempo maximo para esperar uma conexao quando o banco for usado (padrao: `30000`) |
+
+> No Render, mantenha `SPRING_FLYWAY_ENABLED=false` e `SPRING_JPA_HIBERNATE_DDL_AUTO=none` para a API subir sem tocar no Neon. Ligue `SPRING_FLYWAY_ENABLED=true` apenas em um deploy de migracao e volte para `false` depois.
 
 <br/>
 
