@@ -338,13 +338,18 @@ public class WorkoutSessionService {
             throw new IllegalArgumentException("Session does not belong to user");
         }
 
-        Map<Exercise, List<SetLog>> setsByExercise = session.getSets().stream()
-                .collect(Collectors.groupingBy(SetLog::getExercise));
+        Map<UUID, List<SetLog>> setsByExerciseId = session.getSets().stream()
+                .collect(Collectors.groupingBy(set -> set.getExercise().getId()));
 
-        List<ExerciseWithSetsResponse> exercises = setsByExercise.entrySet().stream()
-                .map(entry -> {
-                    Exercise ex = entry.getKey();
-                    List<SetLogDetails> sets = entry.getValue().stream()
+        List<ExerciseWithSetsResponse> exercises = session.getWorkout().getExercises().stream()
+                .sorted(Comparator.comparing(
+                        Exercise::getPosition,
+                        Comparator.nullsLast(Integer::compareTo)
+                ))
+                .map(ex -> {
+                    List<SetLogDetails> sets = setsByExerciseId
+                            .getOrDefault(ex.getId(), List.of())
+                            .stream()
                             .sorted(Comparator.comparing(SetLog::getSetNumber))
                             .map(s -> new SetLogDetails(
                                     s.getSetNumber(),
@@ -355,7 +360,15 @@ public class WorkoutSessionService {
                                     s.getCustomLabel()
                             ))
                             .toList();
-                    return new ExerciseWithSetsResponse(ex.getId(), ex.getName(), sets);
+                    return new ExerciseWithSetsResponse(
+                            ex.getId(),
+                            ex.getName(),
+                            ex.getSets(),
+                            ex.getLastTopSetReps(),
+                            ex.getWeight(),
+                            ex.getPosition(),
+                            sets
+                    );
                 })
                 .toList();
 

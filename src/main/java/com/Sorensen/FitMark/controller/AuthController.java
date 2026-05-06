@@ -98,7 +98,8 @@ public class AuthController {
 
     @Operation(
             summary = "Renovar access token",
-            description = "Valida o refreshToken, revoga-o e emite um novo par de tokens (rotação). " +
+            description = "Valida o refreshToken e emite um novo accessToken. " +
+                    "O refreshToken é mantido e tem sua validade estendida para evitar corrida entre abas/requests. " +
                     "Não requer Authorization header."
     )
     @ApiResponses({
@@ -112,13 +113,12 @@ public class AuthController {
     @PostMapping("/refresh")
     public ResponseEntity<LoginResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
         RefreshToken validated = refreshTokenService.validateRefreshToken(request.refreshToken());
-        refreshTokenService.revokeRefreshToken(request.refreshToken());
+        refreshTokenService.extendRefreshToken(validated);
 
         User user = validated.getUser();
         String newAccessToken = tokenConfig.generateToken(user);
-        String newRefreshToken = refreshTokenService.createRefreshToken(user);
 
-        return ResponseEntity.ok(new LoginResponse(newAccessToken, newRefreshToken));
+        return ResponseEntity.ok(new LoginResponse(newAccessToken, request.refreshToken()));
     }
 
     @Operation(

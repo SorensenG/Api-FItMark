@@ -65,6 +65,12 @@ public class RefreshTokenService {
     }
 
     @Transactional
+    public void extendRefreshToken(RefreshToken refreshToken) {
+        refreshToken.setExpiresAt(OffsetDateTime.now().plusDays(30));
+        refreshTokenRepository.save(refreshToken);
+    }
+
+    @Transactional
     public void revokeAllUserTokens(User user) {
         refreshTokenRepository.deleteAllByUser(user);
     }
